@@ -37,12 +37,12 @@ Pc = Dict(
         tmpA[tmppt[3]+tmpGrowYear+1:end] = fill(tmpA[tmppt[3]+tmpGrowYear], env.MAX_YEAR-tmppt[3]-tmpGrowYear)
 
 
-
-
-
-
 # --------------------------------------- A special section to generate m/c coefficient 用于生成医疗/消费比例
+# NOTE: allows to read in external data file
     tmpq = Array(LinRange( 0.07, 0.25, env.MAX_YEAR ))
+
+
+
 
 
 # --------------------------------------- Vector by Year 序列参数（年）

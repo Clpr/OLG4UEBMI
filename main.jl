@@ -13,12 +13,7 @@
    import DataFrames, CSV  # for data I/O 数据读写用
    import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
-
-
-
-
-
-
+   import EasyHousehold
 
 
 # ======================= Section: Basic Parameters & Consts 基本参数与常量
@@ -41,11 +36,19 @@
 # ======================= Section: Initialization 初始化数据结构&参数包等
    # 1. initialize: data collections
    include("src/proc_VarsDeclare.jl")
-   # 2. initialize: parameter collections
+   # 2. initialize: parameter collections (including Demography and m2c ratio)
    include("src/proc_InitPars.jl")
 
 
-
+# ======================= Section: Initial Steady State 初始稳态搜索
+# 0. print a flag 打印章节名
+println("="^60);println("Section: Initial Steady State Search");println("="^60)
+# 1. prepare guesses 准备猜测/初始值
+Guess = (
+   r = 0.08,  # we guess interest rate, a relative price, rather than an absolute capital factor 猜测利率这样一个相对价格而非猜测资本存量的绝对数值
+   L = 0.6  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
+)
+# 2. begin searching
 
 
 
