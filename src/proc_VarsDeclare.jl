@@ -56,7 +56,7 @@ Dst = Dict(
     :MB => zeros(env.MAX_YEAR,env.MAX_AGE),  # inpatient expenses 住院医疗支出
     # -------------------- Working ages 工作时期
     :w => zeros(env.MAX_YEAR,env.RETIRE_AGE),  # profiled age-specific wage level 经过profiling的工资水平
-    :l => zeros(env.MAX_YEAR,env.RETIRE_AGE),  # leisure 闲暇
+    :Lab => zeros(env.MAX_YEAR,env.RETIRE_AGE),  # labor supply 劳动
 )
 
 

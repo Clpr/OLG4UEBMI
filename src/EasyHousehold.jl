@@ -144,15 +144,15 @@ uses adjusted analytical solution; DP has been roughly deprecated.
                 return Ret::Dict
             end
 
-        ## Section 9: search a c(1) which results in 𝒜dead == 0 搜一个c(1)，使得死亡时财富为0
+        ## Section 8: search a c(1) which results in 𝒜dead == 0 搜一个c(1)，使得死亡时财富为0
         # NOTE: keep Euler equation determined; keep leisure path determined (cauz we've adjusted it)
         # NOTE: use bisection method to search the zero point (scriptA_dead = 0)
             # 1. an object function, receiving c(1), returns 𝒜dead
             objfunc(tmpc1::Real) = begin
                 tmppath_c = tmpc1 .* d[:𝒯]  # get a temporary consumption path
-                return Get𝒜(d,tmppath_c,Ret[:l],S,Sr, a0 + Φ0)[2]  # only return the 2nd element (𝒜 at dead moment)
+                return Get𝒜(d,tmppath_c,Ret[:l], S, Sr, a0 + Φ0)[2]  # only return the 2nd element (𝒜 at dead moment)
             end
-            # 2. search a root, using c(1) on the unlimited path as initial guess, using polyalgorithm (no need to assign searching range)
+            # 2. search a root, using c(1) on the unlimited path as initial guess
             # NOTE: the monotonicity (decreasing) of function 𝒜dead = 𝒜dead( c(1) ) can be wasily proved, and 𝒜dead(0) > 0 ensured
             # NOTE: using bisection searching
                 # 2.1 set search range
@@ -167,7 +167,7 @@ uses adjusted analytical solution; DP has been roughly deprecated.
             # 3. get complete consumption path (through Euler Equation)
             Ret[:c][:] = Ret[:c][1] .* d[:𝒯]
 
-        ## Section 10: get 𝒜, a, Φ paths 得到财富、资产和个人医保账户的路径
+        ## Section 9: get 𝒜, a, Φ paths 得到财富、资产和个人医保账户的路径
         # NOTE: nearly the same as section 6
             # 1. total wealth (𝒜 = a + Φ), returns a path and a real number of wealth at dead moment
             Ret[:𝒜], tmp𝒜dead = Get𝒜( d, Ret[:c], Ret[:l], S, Sr, a0 + Φ0 )
@@ -177,7 +177,7 @@ uses adjusted analytical solution; DP has been roughly deprecated.
             Ret[:a] = Geta( d, Ret[:c], Ret[:l], S, Sr, a0 )
             Ret[:a] .+= tmpGap
 
-        ## Section 11: validate results 结果合法性验证
+        ## Section 10: validate results 结果合法性验证
             # 1. relationship: 𝒜 = a + Φ
             @assert( all(isapprox.(Ret[:𝒜], Ret[:a] .+ Ret[:Φ], atol = 1E-6)) , "relationship scrA = a + Phi not met"   )
             # 2. constraint: c >= 0
@@ -423,7 +423,7 @@ uses adjusted analytical solution; DP has been roughly deprecated.
             :w => fill(1.21,Sr), # wage level
             :𝕒 => fill(0.30,Sr), # transfer rate from firm contribution of UEBMI to working agents
             # -------- len = S - Sr
-            :Λ => fill(1.12,S-Sr), # pension benefit amounts
+            :Λ => fill(0.25,S-Sr), # pension benefit amounts
             :𝕡 => fill(0.10,S-Sr), # transfer amounts from firm contribution of UEBMI to retired agents
         )
         Pc = Dict(
