@@ -8,7 +8,6 @@ uses adjusted analytical solution; DP has been roughly deprecated.
     module EasyHousehold
         import Roots: find_zero, Bisection  # using root searching method in package Root (faster than Bisection() written by myself)
 
-
     # ---------------------------------------------
     """
         u(c::Real, l::Real, q::Real, γ::Real, α::Real)
@@ -139,7 +138,7 @@ uses adjusted analytical solution; DP has been roughly deprecated.
             Ret[:a] .+= tmpGap
 
         ## Section 7: check if the relationship 𝒜 = a + Φ met; then check if no-bequest constraint met 检查是否符合相加关系，以及是否满足无遗产约束            return Ret
-            @assert( all(isapprox.(Ret[:𝒜], Ret[:a] .+ Ret[:Φ], atol = 1E-6)) , "relationship scrA = a + Phi not met"   )
+            @assert( all(isapprox.(Ret[:𝒜], Ret[:a] .+ Ret[:Φ], atol = 1E-6)) , "relationship scrA = a + Phi not met (unlimited path)"   )
             if isapprox(tmp𝒜dead, 0.0, atol = 1E-6)
                 return Ret::Dict
             end
@@ -179,7 +178,7 @@ uses adjusted analytical solution; DP has been roughly deprecated.
 
         ## Section 10: validate results 结果合法性验证
             # 1. relationship: 𝒜 = a + Φ
-            @assert( all(isapprox.(Ret[:𝒜], Ret[:a] .+ Ret[:Φ], atol = 1E-6)) , "relationship scrA = a + Phi not met"   )
+            @assert( all(isapprox.(Ret[:𝒜], Ret[:a] .+ Ret[:Φ], atol = 1E-6)) , "relationship scrA = a + Phi not met (unlimited path)"   )
             # 2. constraint: c >= 0
             @assert( all(Ret[:c] .>= 0.0) , "consumptions are requested to be greater than or equal to 0" )
 
@@ -436,6 +435,10 @@ uses adjusted analytical solution; DP has been roughly deprecated.
         )
         return Pc = Pc::Dict, d::Dict{Symbol,Vector{Float64}}
     end
+
+
+
+
 
 
 

@@ -20,7 +20,7 @@ Pc = Dict(
 # --------------------------------------- A special section to generate technology series 专门章节用于生成技术系数序列
 # NOTE: because technolgies are piecewise functions of time t
     # 1. first, initialize it as one 初始化
-    tmpA = ones(env.MAX_YEAR)
+    tmpA = ones(env.T)
     # 2. then, set time points & convert them to index 设置转折点以分割时期
     tmppt = [1980, 2008, 2018]
     tmppt = [ x - env.START_YEAR + 1 for x in tmppt ]
@@ -34,12 +34,12 @@ Pc = Dict(
         # 3.4 part 4: after 2018, grows 50 years 此后再增长50年
         tmpGrowYear = 50::Int
         tmpA[tmppt[3]:tmppt[3]+tmpGrowYear] = tmpA[tmppt[3]] .* 1.01 .^ (0:tmpGrowYear)
-        tmpA[tmppt[3]+tmpGrowYear+1:end] = fill(tmpA[tmppt[3]+tmpGrowYear], env.MAX_YEAR-tmppt[3]-tmpGrowYear)
+        tmpA[tmppt[3]+tmpGrowYear+1:end] = fill(tmpA[tmppt[3]+tmpGrowYear], env.T-tmppt[3]-tmpGrowYear)
 
 
 # --------------------------------------- A special section to generate m/c coefficient 用于生成医疗/消费比例
 # NOTE: allows to read in external data file
-    tmpq = Array(LinRange( 0.07, 0.25, env.MAX_YEAR ))
+    tmpq = Array(LinRange( 0.07, 0.25, env.T ))
 
 
 
@@ -50,21 +50,22 @@ Pc = Dict(
 # NOTE: wage profiles will be added later
 # parameters (series by year)
 Pt = Dict(
-    :Year => range(env.START_YEAR,length=env.MAX_YEAR),  # a year index (for table making) 制表时用的年份索引
+    :Year => range(env.START_YEAR,length=env.T),  # a year index (for table making) 制表时用的年份索引
     # Firm Department 厂商部门
     :A => tmpA,  # urban technology 城镇技术
-    :β  => fill(0.55,env.MAX_YEAR),  # capital income share 资本收入占比
+    :β  => fill(0.55,env.T),  # capital income share 资本收入占比
     # General Fiscal 一般财政
-    :D2Y => fill(0.0,env.MAX_YEAR),  # upper bound of gov outsanding debt to GDP 未偿债务上限
+    :D2Y => fill(0.0,env.T),  # upper bound of gov outsanding debt to GDP 未偿债务上限
     # Urban Pension 城镇养老金计划
-    :z  => fill(0.85,env.MAX_YEAR),  # collection rates 收缴率
-    :η  => fill(0.2,env.MAX_YEAR),  # contribution rate: firm -> pension 缴纳（比例）：企业
-    :θ  => fill(0.08,env.MAX_YEAR),  # contribution rate: agent -> pension 缴纳（比例）：个人
+    :z  => fill(0.85,env.T),  # collection rates 收缴率
+    :η  => fill(0.2,env.T),  # contribution rate: firm -> pension 缴纳（比例）：企业
+    :θ  => fill(0.08,env.T),  # contribution rate: agent -> pension 缴纳（比例）：个人
     # Urban Medical Scheme 城镇医保计划
-    :ζ  => fill(0.06,env.MAX_YEAR),  # contribution rate: firm -> medical 缴纳（比例）：企业
-    :ϕ  => fill(0.02,env.MAX_YEAR),  # contribution rate: agent -> medical 缴纳（比例）：个人
-    :𝕒  => fill(0.30,env.MAX_YEAR),  # transfer rate: firm contribution -> contributor's (working agents) individual account 转移支付（比例）：企业缴纳至缴纳者自己的个人账户的比例
-    :𝕓  => fill(0.00,env.MAX_YEAR),  # transfer rate: firm contribution -> retried (cross-sectional in one year) individual account 转移支付（比例）：企业缴纳至当年退休人群个人账户的比例
+    :ζ  => fill(0.06,env.T),  # contribution rate: firm -> medical 缴纳（比例）：企业
+    :ϕ  => fill(0.02,env.T),  # contribution rate: agent -> medical 缴纳（比例）：个人
+    :𝕒  => fill(0.30,env.T),  # transfer rate: firm contribution -> contributor's (working agents) individual account 转移支付（比例）：企业缴纳至缴纳者自己的个人账户的比例
+    :𝕓  => fill(0.00,env.T),  # transfer rate: firm contribution -> retried (cross-sectional in one year) individual account 转移支付（比例）：企业缴纳至当年退休人群个人账户的比例
+    :cpB => fill(0.30,env.T),  # co-payment rate of inpatient expenditure 住院支出的自付比例
     # Household & Demands 家庭部门
     :q  => tmpq,  # ratio of total medical expenditure to total consumption 总医疗支出/消费比例系数
 )
@@ -82,11 +83,11 @@ Ps = Dict()
 # 2. Wage Profiling Coefficients 工资系数
 tmpε = CSV.read(env.PATH_WAGEPROFILE)[1]  # read in
 tmpε = tmpε ./ tmpε[1]  # Normalization
-Ps[:ε] = Array{Float64}( tmpε[1:env.RETIRE_AGE] )  # add to Ps
+Ps[:ε] = Array{Float64}( tmpε[1:env.Sr] )  # add to Ps
 
 # 3. MA2MB ratio (outpatient expenditure / inpatient expenditure) 门诊/住院费用比例
 tmpMA2MB = CSV.read(env.PATH_MA2MB)
-Ps[:MA2MB] = tmpMA2MB[1] ./ tmpMA2MB[2]
+Ps[:p] = tmpMA2MB[1] ./ tmpMA2MB[2]
 
 # 4. Demography 人口结构
 # NOTE: provided data are from real age 0 to real age 100 (similar to life table)
@@ -108,8 +109,8 @@ Ps[:MA2MB] = tmpMA2MB[1] ./ tmpMA2MB[2]
     # 4.4 compute accident mortalities 计算意外死亡率
     tmpF = 1.0 .- tmpN[2:end,2:end] ./ tmpN[1:end-1,1:end-1]
     # 4.4 Data truncation from env.START_AGE 从真实年龄处截取人口数据&死亡率
-    tmpN = tmpN[ 1:env.MAX_YEAR, env.START_AGE:env.START_AGE+env.MAX_AGE-1 ]
-    tmpF = tmpF[ 1:env.MAX_YEAR, env.START_AGE:env.START_AGE+env.MAX_AGE-1 ]
+    tmpN = tmpN[ 1:env.T, env.START_AGE:env.START_AGE+env.S-1 ]
+    tmpF = tmpF[ 1:env.T, env.START_AGE:env.START_AGE+env.S-1 ]
     # 4.5 adjust mortalities, make the last column be 0 (because we force all agents die at end of the last age year, so there is no "accident" death) 修正死亡率最后一列令所有值为0，因为我们已经假设了所有人在最后一年末都会死掉，所以“意外死亡率”为0
     tmpF[:,end] .= 0
     # 4.6 normallize population, let total population in the first year be 1 标准化人口，令第一年总人口为1

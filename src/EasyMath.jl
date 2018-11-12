@@ -79,21 +79,64 @@ module EasyMath
 		diagr( MAT::Matrix; offset::Int = 0, LEN::Int = length(diagind(MAT,offset)) )
 
 	reads diagonal elements according to offset=;
-	if LEN > length(diagind(MAT,offset)), automatically repeat the last element;
+	if LEN > length(diagind(MAT,offset)), automatically use elements of the last row to append (continuing the last element); if still not enough, repeat the last element of matrix; 如果指定长度大于该offset处对角线向量的长度，那么用矩阵最后一行的元素，接着对角线结束处填充，如果还不够，则用矩阵最后一个元素重复填充
 	if LEN < length(diagind(MAT,offset)), automatically drop the ending elements;
 	returns a vector;
 
-	# Depends:
+	## Depends:
 	1. LinearAlgebra.diagind()
 	2. LinearAlgebra.diag()
+
+	## An example of case LEN > length
+	for a matrix [1 2 3; 4 5 6] (a 2×3 matrix), if offset = 0 & LEN = 2 = min(row,col), then we get [1,5];
+	if LEN = 3 ≦ max(row,col), we get [1,5,6]; if LEN = 6 > max(row,col), we get [1,5,6,6,6,6];
+	## Another example:
+	for a matrix [1 2 3; 4 5 6; 7 8 9; 10 11 12] (a 4×3 matrix), there are cases:
+	1. offset = 0 < min(row,col)-1 & LEN = 2 < min(row,col): [1,5]
+	2. offset = 0 < min(row,col)-1 & LEN = 3 = min(row,col): [1,5,9]
+	3. offset = 0 < min(row,col)-1 & LEN = 6 > min(row,col): [1,5,9,9,9,9]
+	4. offset = -2 = 1 - min(row,col) & LEN = 2: [7,11]
+	5. offset = -2 = 1 - min(row,col) & LEN = 3 = min(col,row): [7,11,12]
+	5. offset = -2 = 1 - min(row,col) & LEN = 5 > min(col,row): [7,11,12,12,12]
+	6. offset = 1 > 0 & LEN = 5: [2,6,6,6,6]
+
+	## p.s. there are relationships universal for all matrix to help to understand the function:
+	obviously, offset is always in range [1-r, c-1], where r is number of rows, c is number of columns;
+	denote rawLEN as length(diag(MAT,offset)), i.e. length of original diagonal vector;
+	then, for the function *rawLEN(offset)*, there are three cases (with offset from 1-r to c-1):
+	1. Case 1: touching the last/bottom row, where offset ∈ [1-r, X], X is an unknown integer
+	3. Case 2: touching the last/right column, where offset ∈ [X, c-1]
+	What we need to do is determine X & Y for different cases of r & c.
+	There are three (in fact, two) cases of r & c: 1. r < c; 2. r = c; 3. r > c.
+	We then have:
+	1. for r < c: X = r - 1
+	2. for r = c: X = 0
+	3. for r > c: X = 1 - c
+
+	## Depends on:
+	1. vecExpand [EasyMath]
 	"""
 	function diagr( MAT::Matrix; offset::Int = 0, LEN::Int = length(diagind(MAT,offset)) )
+		# measures
+		local r,c = size(MAT);
 		# get diagonal elements
-		tmpVal = diag(MAT,offset); tmpLen = length(Val)
+		tmpVal = diag(MAT,offset); tmpLen = length(tmpVal)
 		# add or cut
-		if LEN > tmpLen
-			append!(tmpVal, fill(Val[end],LEN-tmpLen) )
-		elseif LEN < tmpLen
+		if LEN > tmpLen  # need to add extra elements
+			if r > c
+				if offset < 1 - c
+					append!( tmpVal, vecExpand(MAT[end,tmpLen+1:end], LEN - tmpLen) )  # use left elements in the last row to continue tmpVal, if not enough, repeat the very last element of MAT
+				else
+					append!( tmpVal, fill(tmpVal[end], LEN - tmpLen) )  # if not touching the very last row, just repeat the last element of tmpVal
+				end
+			else  # (r < c)
+				if offset < r - 1
+					append!( tmpVal, vecExpand(MAT[end,tmpLen+1:end], LEN - tmpLen) )
+				else
+					append!( tmpVal, fill(tmpVal[end], LEN - tmpLen) )
+				end
+			end
+		elseif LEN < tmpLen  # just drop extra elements
 			tmpVal = tmpVal[1:LEN]
 		end
 		return tmpVal

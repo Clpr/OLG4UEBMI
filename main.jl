@@ -20,9 +20,9 @@
 # ======================= Section: Basic Parameters & Consts 基本参数与常量
    env = (
       # measured by index 以脚标标记
-      MAX_YEAR = 400,
-      MAX_AGE = 80,
-      RETIRE_AGE = 40,
+      T = 400, # max year
+      S = 80, # max age
+      Sr = 40, # retirement age
       # measured by reality 以真实尺度标记（用于索引、输出、绘图等）
       START_AGE = 20,
       START_YEAR = 1945,
@@ -47,7 +47,7 @@ println("+ Section: Initial Steady State Search ...")
 # 1. prepare guesses 准备猜测/初始值
 Guess = (
    r = 0.08,  # we guess interest rate, a relative price, rather than an absolute capital factor 猜测利率这样一个相对价格而非猜测资本存量的绝对数值
-   L = 0.6  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
+   L = 0.2  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
 )
 # 2. begin searching
 
