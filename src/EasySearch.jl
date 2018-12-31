@@ -14,6 +14,44 @@ module EasySearch
 
     # ==========================================================================
     """
+        SummaryYear( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, S::Int, Sr::Int )
+
+    Summarizes a specific cross-sectional; usually used in the summary of steady states;
+    It returns nothing but prints to console;
+    """
+    function SummaryYear( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, S::Int, Sr::Int )
+        println("\t","."^40, " Factor Markets")
+        println("\t+ Aggregated Capital: ", Dt[:K][t] )
+        println("\t+ Aggregated Labor  : ", Dt[:L][t] )
+        println("\t+ Net Intereste Rate: ", Dt[:r][t] )
+        println("\t+ Average Wage Level: ", Dt[:w̄][t] )
+        println("\t","-"^40, " Good Market")
+        println("\t+ GDP               : ", Dt[:Y][t] )
+        println("\t+ C, I, G           : ", [ Dt[:C][t], Dt[:I][t], Dt[:G][t] ]  )
+        println("\t+ C, I, G Shares    : ", [ Dt[:C][t], Dt[:I][t], Dt[:G][t] ] ./ (Dt[:Y][t] + eps())  )
+        println("\t","."^40, " General Fiscal")
+        println("\t+ TaxRev Consumption: ", Dt[:TRc][t] )
+        println("\t+ TaxRev Wage Income: ", Dt[:TRw][t] )
+        println("\t+ Debt & Debt/GDP   : ", [ Dt[:D][t], Dt[:D2Y][t] ] )
+        println("\t","."^40, " PAYG Pension")
+        println("\t+ Benefit Amount    : ", Dt[:Λ][t] )
+        println("\t+ Substitution Rate : ", Dt[:Λ][t] / (Dt[:w̄][t] * Dt[:L][t] / sum(Ps[:N][t, 1:Sr]) + eps())  )
+        println("\t","."^40, " UE-BMI")
+        println("\t+ Gap of Pooling Acc: ", Dt[:LI][t] )
+        println("\t+ Gap/GDP           : ", Dt[:LI][t] / (Dt[:Y][t] + eps()) )
+        println("\t+ Gap/TaxRev        : ", Dt[:LI][t] / (Dt[:TRc][t] + Dt[:TRw][t] + eps()) )
+        println("\t","."^40, " Household Department")
+        println("\t+ Agg Wealth : ", sum(Ps[:N][t, 1:S] .* Dst[:𝒜][t, 1:S]) )
+        println("\t+ Agg Personal Asset: ", sum(Ps[:N][t, 1:S] .* Dst[:a][t, 1:S]) )
+        println("\t+ Agg UEBMI Indi-Acc: ", sum(Ps[:N][t, 1:S] .* Dst[:Φ][t, 1:S]) )
+        println("\t+ Max Wealth & Loc  : ", findmax(Dst[:𝒜][t, 1:S]) )  # prepared for possible DP, which can help check if DP works well
+        println("\t","-"^40)
+
+        return nothing
+    end
+
+    # ==========================================================================
+    """
         DatSlice4Household( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, S::Int, Sr::Int ; IsSteadyState::Bool = true )
 
     Slices data, generates a Dict **d** for LifeDecision() in EasyHousehold module (just input **Pc** to LifeDecision());
@@ -29,7 +67,7 @@ module EasySearch
     2. EasyMath.diagr(): read diagonal elements from a matrix, automatically add/drop extra elements
     """
     function DatSlice4Household( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, S::Int, Sr::Int ; IsSteadyState::Bool = true )
-        local d = Dict{Symbol,Vector{Float64}}()  # use strong type declaration
+        local d = Dict{Symbol,Vector{Float64}}()  # use strict type declaration
         # Case 1: for SteadyState 稳态
         # NOTE: use one year's data (year t) to fill the whole vectors 针对稳态，使用特定一年的值填充整条路径
         if IsSteadyState
@@ -135,7 +173,8 @@ module EasySearch
         ## Section: malloc
         local tmpK1::Float64, tmpK2::Float64  # temporary variables of capital factor in iterations
         local tmpL1::Float64, tmpL2::Float64  # temporary variables of labor factor
-        tmpL1 = Guess.L  # initialization
+            tmpL1 = Guess.L  # save the guess of aggregated labor (initialization)
+            Dt[:r][t] = Guess.r  # save the guess of interest rate (initialiation)
         ## Section: intermediate variables & abbreviations
         local tmpVal::Float64 = 1.0 + Pt[:z][t] * Pt[:η][t] + Pt[:ζ][t] # a temporary variable
         local πCoef::Float64 = Pt[:z][t] * (Pt[:θ][t] + Pt[:η][t]) / tmpVal # total contribution to pension (on nomial wage level)
@@ -147,8 +186,6 @@ module EasySearch
 
         ## Section: Gauss-Seidel Iterations
         for idx in 1:MaxIter
-            # SubSection 0: header information 打印头部信息
-            PrintMode == "full"  &&   println("\t+ Round: ",idx)
             # SubSection 1: firm department 厂商部门
                 # 1. production function & firm optimal decisions 生产函数 & 厂商最优决策
                 if idx == 1   # NOTE: use interest rate & labor to get capital in the first round  第一轮使用利率和劳动力反推出资本存量
@@ -167,34 +204,96 @@ module EasySearch
             # SubSection 4: household lifetime optimization 家庭部门生命期效用最大化问题
                 # 1. prepare sliced data 准备输入数据切片
                 local tmpd = DatSlice4Household(t, Dt,Dst,Pt,Ps,env.S,env.Sr, IsSteadyState = true)  # is steady state, use cross-sectional data to fill paths
-                # 2. solve the optimization, get paths 求解，得到路径（财富、资产、个人医保、消费、闲暇）
+                # 2. solve the optimization, get paths (wealth, asset, UEBMI-indi, consumption, leisure) 求解，得到路径（财富、资产、个人医保、消费、闲暇）
                 local tmpRet = EasyHousehold.LifeDecision(0.0, 0.0, Pc, tmpd, env.S, env.Sr)
                 # 3. distribute results 存储结果
-                Dst[:𝒜][t, 1:env.S] = tmpRet[:𝒜] # wealth
-                Dst[:a][t, 1:env.S] = tmpRet[:a]  # personal asset
-                Dst[:Φ][t, 1:env.S] = tmpRet[:Φ]  # individual medical account (UE-BMI)
-                Dst[:c][t, 1:env.S] = tmpRet[:c]  # total consumption
+                Dst[:𝒜][t, 1:env.S] = tmpRet[:𝒜] # distribution of wealth (capital)
+                Dst[:a][t, 1:env.S] = tmpRet[:a]  # distribution of personal asset accounts
+                Dst[:Φ][t, 1:env.S] = tmpRet[:Φ]  # distribution of the individual medical accounts of UE-BMI
+                Dst[:c][t, 1:env.S] = tmpRet[:c]  # total consumption 社会总消费
                 Dst[:Lab][t, 1:env.Sr] .= 1.0 .- tmpRet[:l]  # labor supply (converting leisure to labor)
-                # 4. other derived results 其他衍生的结果
+                # 4. other related results 其他衍生的结果
                 Dst[:m][t, 1:env.S] .= tmpRet[:c] .* Pt[:q][t]  # total medical expenditure
                 Dst[:MA][t, 1:env.S] .= Dst[:m][t, 1:env.S] .* Ps[:p][1:env.S] ./ (1.0 .+ Ps[:p][1:env.S])  # outpatient expenditure
                 Dst[:MB][t, 1:env.S] .= Dst[:m][t, 1:env.S] ./ (1.0 .+ Ps[:p][1:env.S])  # inpatient expenditure
             # SubSection 5: fiscal & UE-BMI 财政 &　UE-BMI
                 # 1. tax revenues 税收
                 Dt[:TRc][t] = Pc[:μ] * sum( Dst[:c][t, 1:env.S]   .* Ps[:N][t,1:env.S] )  # consumption tax 消费税
-                Dt[:TRc][t] = Pc[:σ] * sum( Dst[:Lab][t, 1:env.Sr] .* Ps[:N][t,1:env.Sr] .* Dst[:w][t, 1:env.Sr] )  # consumption tax 消费税
+                Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, 1:env.Sr] .* Ps[:N][t,1:env.Sr] .* Dst[:w][t, 1:env.Sr] )  # wage tax 工资税
+                # 2. the gaps of the social pooling account of UE-BMI (positive for gap, negative for surplus)
+                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] .* Dst[:MB][t, 1:env.S] .* Ps[:N][t,1:env.S] ) )
+                Dt[:LI][t] -= ( 1 .- Pt[:𝕒][t] .- Pt[:𝕓][t] ) .* Pt[:ζ][t] ./ ( 1 .+ Pt[:η][t] + Pt[:ζ][t] ) .* sum( Ps[:N][t,1:env.Sr] .* Dst[:w][t, 1:env.Sr] .* Dst[:Lab][t, 1:env.Sr] )
+            # SubSection 6: update aggregated labor supply 更新劳动力供应
+                tmpL2 = sum( Ps[:N][t,1:env.Sr] .* Dst[:Lab][t, 1:env.Sr] )
+            # SubSection 7: update GDP with the updated labor supply (through production function) 使用更新的劳动要素更新GDP估计
+                Dt[:Y][t] = EasyEcon.CDProdFunc( Pt[:A][t], tmpK1, tmpL2, Pt[:β][t], κ = Pc[:κ], GetPrice = true, TechType = "Hicks"  )[1]
+            # SubSection 8: update updating aggregated capital (K)
+                # NOTE: there are two ways to update K: one uses the capital market clearing condition (Method A);
+                # and the other one uses the capital growth dynamics (Method B); the two methods are equivalent; and I use Method A here.
+                # 1. get aggregated investment (I) through capita dynamics 通过资本动态条件得到投资
+                Dt[:I][t] = tmpK1 * Pc[:κ]
+                # 2. aggregate consumption 汇总社会总消费
+                Dt[:C][t] = sum( Dst[:c][t, 1:env.S] .* Ps[:N][t,1:env.S] )
+                # 3. get government purchase (G) through the good market clearing condition 通过商品市场出清得到政府购买
+                Dt[:G][t] = Dt[:Y][t] - Dt[:I][t] - Dt[:C][t]
+                # 4. get government outstanding debt through the fiscal budget 通过政府预算约束得到政府债务余额
+                Dt[:D][t] = ( Dt[:G][t] + Dt[:LI][t] - Dt[:TRc][t] - Dt[:TRw][t] ) / (1 - Dt[:r][t])
+                # 5. the upper bound of government outstanding debt 政府未偿债务软约束
+                Dt[:D][t] = max( 0.0, min( Dt[:D][t], Dt[:Y][t] * Pt[:D2Y][t] ) )
+                # 6. record the ratio of government outstanding debt on GDP 记录未偿债务与GDP的比
+                Dt[:D2Y][t] = Dt[:D][t] / Dt[:Y][t]
+                # 7. aggregate/update capital 汇总/更新（年初）资本存量
+                tmpK2 = sum( Dst[:𝒜][t, 1:env.S] .* Ps[:N][t,1:env.S] )
 
+            # Convergence check & go to the next loop 收敛检查
+                # 1. compute errors, using a minor number to avoid exact zeros
+                local Err = ( K = abs(tmpK2 / (tmpK1 + eps()) ) - 1, L = abs(tmpL2 / (tmpL1 + eps()) ) - 1 )
+                # 2. record original K, L
+                local OriGuess = [tmpK1, tmpL1]
+                # 3. check
+                if all(Err .< atol)  # converged
+                    # 1. save the converged K, L; using mean values
+                    Dt[:K] = ( tmpK1 + tmpK2 ) / 2; Dt[:L] = ( tmpL1 + tmpL2 ) / 2;
+                    # 2. print final summary (if not silently solved)
+                    if PrintMode != "silent"
+                        println("\t+ Status: Converged")  # status
+                        println("\t+ Relative Errors: ",Err)  # print error first
+                        SummaryYear( t, Dt, Dst, Pt, Ps, S, Sr )  # print the details of the steady state
+                    end
+                    break  # ends iteration
+                elseif idx == MaxIter  # diverged or too few maxmimum rounds set
+                    Dt[:K] = ( tmpK1 + tmpK2 ) / 2; Dt[:L] = ( tmpL1 + tmpL2 ) / 2;
+                    if PrintMode != "silent"
+                        println("\t+ Status: Maximum iteration reached, not converged")
+                        println("\t+ Relative Errors: ",Err)
+                        SummaryYear( t, Dt, Dst, Pt, Ps, S, Sr )
+                    end
+                    break  # ends iteration
+                else  # go to the next loop
+                    # 1. check if the updated labor supply touches the bottom of zero
+                    (tmpL2 < 0 || ~isreal(tmpL2))    &&    begin @warn("Labor lower than 0 or complex!"); tmpL2 = 0.01; end
+                    # 2. update labor supply
+                    tmpL1 += StepLen * (tmpL2 - tmpL1)
+                    # 3. use the magic number to set the bottom of capital, which bounds the interest rate in a reasonable range
+                    local tmpKfloor = MagicNum * tmpL1
+                    # 4. check & update capital supply
+                    (tmpK2 < tmpKfloor || ~isreal(tmpK2))    &&    begin @warn("Capital lower than the lower bound or complex!"); tmpK2 = tmpKfloor; end
+                    tmpK1 += StepLen * (tmpK2 - tmpK1)
+                    # 5. print information, according to :PrintMode
+                    if PrintMode in ["full", "concise"]
+                        println("\t+ Round: ", idx, "; Relative Errors: ", Err)
+                    end
+                    if PrintMode == "full"
+                        SummaryYear( t, Dt, Dst, Pt, Ps, S, Sr )
+                    end
+                    # 6. explicitly write continue (as a reminder without practical jobs)
+                    continue
+                end  # check ends
 
-
-
-
-
-        end # Gauss-Seidel Iterations end
-
-
-
+        end # Gauss-Seidel Iteration ends
+        # nomial return
         return nothing
-    end
+    end  # function ends
 
     # -----------------------------------------
 

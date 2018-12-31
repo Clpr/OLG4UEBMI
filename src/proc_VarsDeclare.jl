@@ -27,7 +27,7 @@ Dt = Dict(
     :D2Y => zeros(env.T),  # Government outstanding debt to GDP  政府未偿债务余额/GDP (verbose, not used)
     :TRc => zeros(env.T),  # Urban total consumption tax revenues  城镇总消费税收入
     :TRw => zeros(env.T),  # Urban total income tax revenues  城镇总收入税收入
-    :LI  => zeros(env.T),  # Gap/Surplus of urban pooling medical account  城镇医保统筹账户缺口
+    :LI  => zeros(env.T),  # the gap/surplus of the urban pooling medical account (UE-BMI)  城镇医保统筹账户缺口
     # ---------------- Welfare 福利
     :U => zeros(env.T),  # aggregated cross-sectional social utility 当年城镇居民效用之和
     # ---------------- Abstract & Intermediate 抽象变量和中间变量

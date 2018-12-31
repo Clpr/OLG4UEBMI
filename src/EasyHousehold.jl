@@ -408,8 +408,8 @@ uses adjusted analytical solution; DP has been roughly deprecated.
     function GetTestData(S::Int,Sr::Int)
         d = Dict(
             # -------- len = S
-            :r => fill(0.07,S), # interest rates
-            :F => fill(0.01,S), # mortality
+            :r => fill(0.0603498,S), # interest rates
+            :F => Array(LinRange(0.0002,0.187,S)) , # mortality
             :q => fill(0.15,S), # m2c ratio
             :p => fill(1.11,S), # MA/MB ratio
             :cpB => fill(0.30,S), # co-payment rate of inpatient expenditure
@@ -419,11 +419,11 @@ uses adjusted analytical solution; DP has been roughly deprecated.
             :η => fill(0.20,Sr), # contribution: firm → pension
             :θ => fill(0.08,Sr), # contribution: agent → pension
             :z => fill(0.85,Sr), # collection rate of pension
-            :w => fill(1.21,Sr), # wage level
+            :w => fill(3.20496,Sr), # wage level
             :𝕒 => fill(0.30,Sr), # transfer rate from firm contribution of UEBMI to working agents
             # -------- len = S - Sr
-            :Λ => fill(0.25,S-Sr), # pension benefit amounts
-            :𝕡 => fill(0.10,S-Sr), # transfer amounts from firm contribution of UEBMI to retired agents
+            :Λ => fill(0.344050,S-Sr), # pension benefit amounts
+            :𝕡 => fill(0.00,S-Sr), # transfer amounts from firm contribution of UEBMI to retired agents
         )
         Pc = Dict(
             :κ => 0.05,  # depreciation rate 折旧率
