@@ -1,0 +1,65 @@
+# 正常working+retire
+tmpOriginData = House.SampleOrigindata;
+tmpConst, tmpDict = House.lev0Abbr( tmpOriginData )
+# tmpConst = House.SampleConst; tmpDict = copy(House.SampleLev0Abbr);
+House.lev1Abbr!(tmpDict,tmpConst)
+House.lev2Abbr!(tmpDict,tmpConst)
+tmpcs, tmpls = House.getcls( 0.1, tmpDict, tmpConst )
+tmpks = House.getks( tmpcs, tmpls, tmpDict, tmpConst )
+House.G( 0.1, tmpDict, tmpConst )
+@time tmpRes = House.HHSolve( tmpOriginData , ReturnData = true )
+House.ExtractAPhi!( tmpRes, tmpOriginData , a1 = 0.0 )
+
+# 只有1期working
+tmpOriginData1 = House.SampleOrigindata1;
+tmpConst1, tmpDict1 = House.lev0Abbr( tmpOriginData1 )
+# tmpConst1 = House.SampleConst1; tmpDict1 = copy(House.SampleLev0Abbr1);
+House.lev1Abbr!(tmpDict1,tmpConst1)
+House.lev2Abbr!(tmpDict1,tmpConst1)
+tmpcs1, tmpls1 = House.getcls( 0.1, tmpDict1, tmpConst1 )
+tmpks1 = House.getks( tmpcs1, tmpls1, tmpDict1, tmpConst1 )
+House.G( 0.1, tmpDict1, tmpConst1 )
+@time tmpRes1 = House.HHSolve( tmpOriginData1 , ReturnData = true )
+House.ExtractAPhi!( tmpRes1, tmpOriginData1 , a1 = 0.0 )
+
+
+# 只有退休期
+tmpOriginData_Retired = House.SampleOrigindata_Retired;
+tmpConst_Retired, tmpDict_Retired = House.lev0Abbr_Retired( tmpOriginData_Retired )
+# tmpConst_Retired = House.SampleConst_Retired; tmpDict_Retired = copy(House.SampleLev0Abbr_Retired);
+House.lev1Abbr_Retired!(tmpDict_Retired,tmpConst_Retired)
+House.lev2Abbr_Retired!(tmpDict_Retired,tmpConst_Retired)
+tmpcs_Retired = House.getcls_Retired( 0.1, tmpDict_Retired, tmpConst_Retired )
+tmpks_Retired = House.getks_Retired( tmpcs_Retired, tmpDict_Retired, tmpConst_Retired )
+House.G_Retired( 0.1, tmpDict_Retired, tmpConst_Retired )
+@time tmpRes_Retired = House.HHSolve_Retired( tmpOriginData_Retired , ReturnData = true )
+House.ExtractAPhi_Retired!( tmpRes_Retired, tmpOriginData_Retired , a1 = 0.0 )
+
+
+# 只有1期退休期
+tmpOriginData_Retired1 = House.SampleOrigindata_Retired1;
+tmpConst_Retired1, tmpDict_Retired1 = House.lev0Abbr_Retired( tmpOriginData_Retired1 )
+# tmpConst_Retired1 = House.SampleConst_Retired1; tmpDict_Retired1 = copy(House.SampleLev0Abbr_Retired1);
+House.lev1Abbr_Retired!(tmpDict_Retired1,tmpConst_Retired1)
+House.lev2Abbr_Retired!(tmpDict_Retired1,tmpConst_Retired1)
+tmpcs_Retired1 = House.getcls_Retired( 0.1, tmpDict_Retired1, tmpConst_Retired1 )
+tmpks_Retired1 = House.getks_Retired( tmpcs_Retired1, tmpDict_Retired1, tmpConst_Retired1 )
+House.G_Retired( 0.1, tmpDict_Retired1, tmpConst_Retired1 )
+@time tmpRes_Retired1 = House.HHSolve_Retired( tmpOriginData_Retired1 , ReturnData = true )
+House.ExtractAPhi_Retired!( tmpRes_Retired1, tmpOriginData_Retired1 , a1 = 0.0 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#

@@ -13,7 +13,7 @@
    import DataFrames, CSV  # for data I/O 数据读写用
    import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
-   import EasyHousehold
+   # import EasyHousehold
    import EasyEcon  # economic functions
 
 
