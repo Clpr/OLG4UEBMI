@@ -113,6 +113,11 @@ Ps[:p] = tmpMA2MB[1] ./ tmpMA2MB[2]
     tmpF = tmpF[ 1:env.T, env.START_AGE:env.START_AGE+env.S-1 ]
     # 4.5 adjust mortalities, make the last column be 0 (because we force all agents die at end of the last age year, so there is no "accident" death) 修正死亡率最后一列令所有值为0，因为我们已经假设了所有人在最后一年末都会死掉，所以“意外死亡率”为0
     tmpF[:,end] .= 0
+    # 4.5.5 adjust the first row to correct the wrong mortalities raised by modified population
+    # NOTE: our adjustment on the demography in year 0 will result in ultra-high accident mortalities which blow up our household life-cycle problems
+    #       therefore, we use the accident mortalities in year 1 to approximate that in year 0
+    #       我们对初始稳态人口的调整会导致瞬时死亡率过高，从而家庭优化问题会爆掉，所以用第1年的覆盖掉第0年的
+    tmpF[1,:] .= tmpF[2,:]
     # 4.6 normallize population, let total population in the first year be 1 标准化人口，令第一年总人口为1
     tmpN ./= sum(tmpN[1,:])
     # 4.7 save demography to dictionary Ps

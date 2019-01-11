@@ -1,5 +1,32 @@
+tmpOriginData = Dict(
+    # ---------- Constants
+    :Smax => 10,  # maximum age
+    :Sret => 1,  # retirement age
+    :alpha => 1.5, # leisure preference than consumption
+    :gamma => 0.5, # the inter-temporal elasticity of substitution
+    :k1 => 0.0, # capital when born
+    # ---------- Vectors
+    :Survival => fill(0.001, 10),  # survival probabilities between two years
+    :q => fill(0.15, 10),  # the ratio of health expenditure on consumption
+    :r => fill(0.08, 10),  # interest rate
+    :w => fill(3.25, 1),  # wage level
+    :z => fill(0.85, 1),  # the collection rate of PAYG pension
+    :θ => fill(0.08, 1),  # contribution: agent -> PAYG pension
+    :η => fill(0.20, 1),  # contribution: firm  -> PAYG pension
+    :ϕ => fill(0.02, 1),  # contribution: agent -> UEBMI
+    :ζ => fill(0.06, 1),  # contribution: firm  -> UEBMI
+    :cpB => fill(0.30, 10),  # copayment rate of UEBMI (inhospital)
+    :p => fill(1.10, 10),  # the ratio of outpatient expenditure on inpatient expenditure
+    :Λ => fill(0.95, 10-1),  # the benefits of PAYG pension
+    :𝕡 => fill(0.10, 10-1),  # the amount of the transfer payment from this year's firm contribution to UEBMI to those have retired in this year
+    :𝕒 => fill(0.30, 1),  # the rate of the money transferred from this year's firm contribution to those working men's individual account of UEBMI
+    # ------------ Constant in this paper but converted to vectors
+    :σ => fill(0.24, 1),  # wage taxation
+    :μ => fill(0.10, 10),  # consumption taxation
+    :δ => fill(1/0.99 - 1, 10), # the discounting rate of utility
+)
 # 正常working+retire
-tmpOriginData = House.SampleOrigindata;
+# tmpOriginData = House.SampleOrigindata;
 tmpConst, tmpDict = House.lev0Abbr( tmpOriginData )
 # tmpConst = House.SampleConst; tmpDict = copy(House.SampleLev0Abbr);
 House.lev1Abbr!(tmpDict,tmpConst)

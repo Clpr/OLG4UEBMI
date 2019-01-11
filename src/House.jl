@@ -463,6 +463,7 @@ end
 # NOTE: in this section, we define some useful functions in problem solving.
 #       本节我们定义一些在求解过程中很实用的函数
 #       including:
+#       1. u(): the cross-sectional utility function we use 我们使用的截面效用函数
 #       1. getks(), getks_Retired(): get the series of k_{s} at the beginning of age s, s=1,...,S+1 得到s岁年初的资产余额序列，包括死亡时候的遗产
 #       1. getcls(), getcls_Retired(): get the series of c_{s} and l_{s}, based on c_{1} 根据输入的c_{1}得到完整的消费和劳动力路径
 #       2. G(), G_Retired(): get k_{S+1}, i.e. the budget constraint, the bequest; used to test whether budget constraints are met 得到死亡时的资产余额，用于检查预算约束是否满足
@@ -473,6 +474,25 @@ end
 #       meanwhile, we also provide some other decorated functions
 #       同时，我们也提供其他的一些修饰过的函数
 # ---------------
+"""
+    u( c::Real, l::Real ; q::Real = 0.15, alpha::Real = 1.5, gamma::Real = 0.5 )
+
+A dessert function: cross-sectional utility function we used:
+`` u(c\\geq 0,l\\geq 0|q\\in(0,1),\\bar{l}_{s}>0,\\alpha>0,\\gamma>0) = \\frac{1}{1-\\gamma^{-1}} [  [(1-q)c + \\epsilon]^{1-\\gamma^{-1}} + \\alpha [\\bar{l}_{s} - l + \\epsilon]^{1-\\gamma^{-1}}  ] ``,
+where ``c`` is consumption, ``l`` is **labor**, ``q`` is the proportion of non-utility-improved consumtpion (e.g. health expenditure),
+``\\bar{l}_{s}`` is time endowment, ``\\alpha`` is the leisure preference than consumption,
+``\\gamma`` is the inter-temporal elasiticy of substitutions,
+and ``\\epsilon`` is a infinitesimal (eps()) to avoid the domain errors raised by exact 0.
+
+Returns a Real, the value of utility.
+"""
+function u( c::Real, l::Real ; lbar::Real = 1.0, q::Real = 0.15, alpha::Real = 1.5, gamma::Real = 0.5 )
+    @assert( (c >= 0)&(l >= 0)&(lbar > 0)&(0 < q < 1)&(alpha > 0)&(gamma > 0), "at least one out-of-bound parameter in House.u()" )
+    @assert( isfinite(c) & isfinite(l) & isfinite(lbar) & isfinite(q) & isfinite(alpha) & isfinite(gamma), "at least one infinite parameter in House.u()" )
+    local uval::Float64 = 1.0 / (1.0 - 1.0 / gamma) * (  ( (1.0 - q) * c + eps() ) ^ ( 1.0 - 1.0 / gamma ) + alpha * ( lbar - l + eps() ) ^ ( 1.0 - 1.0 / gamma )  )
+    return uval::Float64
+end
+# -----------
 """
     getks( cpath::Vector, lpath::Vector, DictPar::Dict, ConstPar::NamedTuple )
 
@@ -676,7 +696,8 @@ function HHSolve( OriginData::Dict ; ReturnData::Bool = true )
     # compute the value of compressed budget constraint (bequest)
     local chkG::Float64 = GAdj( c1Adj, lsAdj, DictPar, ConstPar )
     # check if the budget constraint met
-    @assert( abs(chkG) < 1E-8 , "the budget constraint is not satisfied at the tolerance level of 1E-08" )
+    abs(chkG) >= 1E-6  &&  throw(ErrorException(string( "the budget constraint is not satisfied at the tolerance level of 1E-06: ", abs(chkG) )))
+    # @assert( abs(chkG) < 1E-6 , "the budget constraint is not satisfied at the tolerance level of 1E-08" )
 
     # when solved successfully, get the series of \tilde{k}*_{s}
     local ksAdj = getks( csAdj, lsAdj, DictPar, ConstPar )
@@ -735,7 +756,7 @@ function HHSolve_Retired( OriginData::Dict ; ReturnData::Bool = true )
         # compute the value of compressed budget constraint (bequest)
         local chkG::Float64 = G_Retired( c1Adj, DictPar, ConstPar )
         # check if the budget constraint met
-        @assert( abs(chkG) < 1E-8 , "the budget constraint is not satisfied at the tolerance level of 1E-08" )
+        @assert( abs(chkG) < 1E-6 , "the budget constraint is not satisfied at the tolerance level of 1E-06" )
 
         # when solved successfully, get the series of \tilde{k}*_{s}
         local ksAdj = getks_Retired( csAdj, DictPar, ConstPar )
@@ -955,7 +976,7 @@ SampleOrigindata = Dict(
     :Λ => fill(0.95, 40-21),  # the benefits of PAYG pension
     :𝕡 => fill(0.10, 40-21),  # the amount of the transfer payment from this year's firm contribution to UEBMI to those have retired in this year
     :𝕒 => fill(0.30, 21),  # the rate of the money transferred from this year's firm contribution to those working men's individual account of UEBMI
-    # ------------ Constant in this paper but converted to vectors
+    # ------------ Constant in this paper but converted to vectors in a standard problem
     :σ => fill(0.24, 21),  # wage taxation
     :μ => fill(0.10, 40),  # consumption taxation
     :δ => fill(1/0.99 - 1, 40), # the discounting rate of utility

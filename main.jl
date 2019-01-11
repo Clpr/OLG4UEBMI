@@ -13,8 +13,8 @@
    import DataFrames, CSV  # for data I/O 数据读写用
    import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
-   # import EasyHousehold
-   import EasyEcon  # economic functions
+   import EasySearch # Search algorithms, for both Steady States & Transition paths 稳态&转轨搜索
+
 
 
 # ======================= Section: Basic Parameters & Consts 基本参数与常量
@@ -50,16 +50,22 @@ Guess = (
    L = 0.2  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
 )
 # 2. begin searching
-EasySearch.SteadyState!( 1, Guess,
-   Dt, Dst, env, Pt, Ps, Pc,
-   atol = 1E-8,  # tolerance of Gauss-Seidel iteration
-   MaxIter = 100,  # maximum loops
-   PrintMode = "full",  # mode of printing
+EasySearch.SteadyState!( 2, Guess,
+   Dt, Dst, Pt, Ps, Pc, env,
+   atol = 1E-6,  # tolerance of Gauss-Seidel iteration
+   MaxIter = 50,  # maximum loops
+   PrintMode = "final",  # mode of printing
    MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
    StepLen = 0.5  # relative step length to update guesses, in range (0,1]
 )
 
-
+# ======================= Section: Final Steady State 最终稳态搜索
+println("+ Section: Final Steady State Search ...")
+Guess = ( r = 0.08, L = 0.2 )
+# 2. begin searching
+EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
+   atol = 1E-6, MaxIter = 50,
+   PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
 
 
 

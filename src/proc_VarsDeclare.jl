@@ -49,6 +49,7 @@ Dst = Dict(
     :m => zeros(env.T,env.S),  # total medical expenses 总医疗支出
     :MA => zeros(env.T,env.S),  # outpatient expenses 门诊医疗支出
     :MB => zeros(env.T,env.S),  # inpatient expenses 住院医疗支出
+    :ΦGaps => zeros(env.T,env.S),  # the transfer payments from agent's own a_{s} to the individual account of UEBMI Φ_{s}
     # -------------------- Working ages 工作时期
     :w => zeros(env.T,env.Sr),  # profiled age-specific wage level 经过profiling的工资水平
     :Lab => zeros(env.T,env.Sr),  # labor supply 劳动
