@@ -53,16 +53,16 @@ Guess = (
    L = 0.2  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
 )
 # 2. begin searching
-@time EasySearch.SteadyState!( 2, Guess,
+@time EasySearch.SteadyState!( 1, Guess,
    Dt, Dst, Pt, Ps, Pc, env,
-   atol = 1E-6,  # tolerance of Gauss-Seidel iteration
+   atol = 1E-8,  # tolerance of Gauss-Seidel iteration
    MaxIter = 50,  # maximum loops
    PrintMode = "final",  # mode of printing
    MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
    StepLen = 0.5  # relative step length to update guesses, in range (0,1]
 )
 # 3. plotting & output
-EasyPlot.Plot_SteadyState( 2, Dt, Dst, Pt, Ps, Pc, env,
+EasyPlot.Plot_SteadyState( 1, Dt, Dst, Pt, Ps, Pc, env,
    outpdf = string("./output/", "InitSS_", EasyPlot.LogTag(), ".pdf" )
    )
 
