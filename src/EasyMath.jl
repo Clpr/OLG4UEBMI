@@ -39,17 +39,18 @@ module EasyMath
     """
     function diagw( MAT::Matrix, VEC::Union{Vector,Tuple,NamedTuple,AbstractRange} ; offset::Int = 0 )
         # validation
-        LEN = length(VEC)
-		# operate on copy
-        MAT=copy(MAT); VEC = copy(VEC)
+        local LEN = length(VEC)
+		# operate on copies
+        local MAT2 = copy(MAT)
+		local VEC2 = copy(VEC)
         # get indexes range
-		tmpIdxRange = diagind(MAT, offset)
+		local tmpIdxRange = diagind(MAT2, offset)
 		# fill elements
 		for s in 1:min( LEN, length(tmpIdxRange) )
-			MAT[ tmpIdxRange[s] ] = VEC[s]
+			MAT2[ tmpIdxRange[s] ] = VEC2[s]
 		end
         # return the copy of MAT
-        return MAT::Matrix
+        return MAT2::Matrix
     end
 	# -------------------------------------------------------------------
 	"""
@@ -64,9 +65,9 @@ module EasyMath
     """
     function diagw!( MAT::Matrix, VEC::Union{Vector,Tuple,NamedTuple,AbstractRange} ; offset::Int = 0 )
         # validation
-        LEN = length(VEC)
+        local LEN = length(VEC)
         # get indexes range
-		tmpIdxRange = diagind(MAT, offset)
+		local tmpIdxRange = diagind(MAT, offset)
 		# fill elements
 		for s in 1:min( LEN, length(tmpIdxRange) )
 			MAT[ tmpIdxRange[s] ] = VEC[s]

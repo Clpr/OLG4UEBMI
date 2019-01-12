@@ -825,7 +825,7 @@ function ExtractAPhi!( ResHHSolve::Dict, OriginData::Dict ; a1::Float64 = 0.0 )
     # compute Φ_{1}
     local Φ1 = ResHHSolve[:ConstPar].k1 - a1
     # assertions
-    @assert( (a1 >= 0.0) & (Φ1 >= 0.0) , "invalid a1 or Phi1, requiring: >= 0"  )
+    # @assert( (a1 >= 0.0) & (Φ1 >= 0.0) , "invalid a1 or Phi1, requiring: >= 0"  )
     # 1. the individual account of UE-BMI (Φ_{s})
     # NOTE: account budget:
     #       A_{s} Φ_{s+1} = B_{s} Φ_{s} + newD_{s} l_{s} - newE_{s} c_{s} , s = 1,...,Sr
@@ -895,7 +895,7 @@ function ExtractAPhi_Retired!( ResHHSolve::Dict, OriginData::Dict ; a1::Float64 
     # compute Φ_{1}
     local Φ1 = ResHHSolve[:ConstPar].k1 - a1
     # assertions
-    @assert( (a1 >= 0.0) & (Φ1 >= 0.0) , "invalid a1 or Phi1, requiring: >= 0"  )
+    # @assert( (a1 >= 0.0) & (Φ1 >= 0.0) , "invalid a1 or Phi1, requiring: >= 0"  )
     # 1. the individual account of UE-BMI (Φ_{s})
     # NOTE: account budget:
     #       A_{s} Φ_{s+1} = B_{s} Φ_{s} - newE_{s} c_{s} , s = 1,...,S

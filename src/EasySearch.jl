@@ -9,7 +9,7 @@ requires modules/packages in LOAD_PATH
 module EasySearch
     import House  # household life-cycle optimization problems
     import EasyEcon  # economic functions, e.g. CD production function
-    import EasyMath: vecExpand, diagr  # generalized mathematical and linear-algebra methods
+    import EasyMath: vecExpand, diagr, diagw!  # generalized mathematical and linear-algebra methods
 
 
 # ==============================================================================
@@ -392,7 +392,7 @@ module EasySearch
                 # 4. get government outstanding debt through the fiscal budget 通过政府预算约束得到政府债务余额
                 Dt[:D][t] = ( Dt[:G][t] + Dt[:LI][t] - Dt[:TRc][t] - Dt[:TRw][t] ) / (1 - Dt[:r][t])
                 # 5. the upper bound of government outstanding debt 政府未偿债务软约束
-                Dt[:D][t] = max( 0.0, min( Dt[:D][t], Dt[:Y][t] * Pt[:D2Y][t] ) )
+                Dt[:D][t] = max( 0.0, min( Dt[:D][t], Dt[:Y][t] * Pt[:D2Ycap][t] ) )
                 # 6. record the ratio of government outstanding debt on GDP 记录未偿债务与GDP的比
                 Dt[:D2Y][t] = Dt[:D][t] / Dt[:Y][t]
                 # 7. aggregate/update capital 汇总/更新（年初）资本存量
@@ -432,7 +432,7 @@ module EasySearch
                     break  # ends iteration
                 else  # go to the next loop
                     # 1. check if the updated labor supply touches the bottom of zero
-                    (tmpL2 < 0 || ~isreal(tmpL2))    &&    begin @warn("Labor lower than 0 or complex!"); tmpL2 = 0.01; end
+                    (tmpL2 <     0 || ~isreal(tmpL2))    &&    begin @warn("Labor lower than 0 or complex!"); tmpL2 = 0.01; end
                     # 2. update labor supply
                     tmpL1 += StepLen * (tmpL2 - tmpL1)
                     # 3. use the magic number to set the bottom of capital, which bounds the interest rate in a reasonable range
@@ -461,6 +461,347 @@ module EasySearch
     end  # function ends
 
     # -----------------------------------------
+
+
+
+
+
+# ==============================================================================
+## SECTION 2: Transition Search 转轨路径搜索
+# NOTE: in this section, we define an in-place function Transition!()
+#       本节我们定义一个直接作用于数据包上的函数Transition!()
+#       it is used to search a transition path on input datasets
+#       using Gauss-Seidel iterations
+#       returns nothing
+# ------------
+    """
+        Transition!( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple ; atol::Float64 = 1E-8, MaxIter::Int = 100, PrintMode::String = "full", MagicNum::Real = 2.0, StepLen::Real = 0.5 )
+
+    Searches a transition path based on the input datasets;
+    requires Initial & Final Steady States searched;
+    returns nothing;
+
+    And, the definitions of input parameters are the same as those of SteadyState!()
+    """
+    function Transition!( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple ;
+        atol::Float64 = 1E-8,  # tolerance of Gauss-Seidel iteration
+        MaxIter::Int = 100,  # maximum loops
+        PrintMode::String = "full",  # mode of printing, one of ["full","concise","final","silent"]
+        MagicNum::Real = 2.0,  # magic number, the lower bound of K/L (capital per labor)
+        StepLen::Real = 0.5 ) # relative step length to update guesses, in range (0,1]
+        # ------------
+        ## Section: validation
+            @assert( PrintMode in ["full","concise","final","silent"] , "undefined PrintMode string" )
+            @assert( 0.0 < StepLen <= 1.0 , "invalid StepLen, it should be in range (0,1]" )
+            @assert( MagicNum > 0.0 , "invalid MagicNum (capital per capita) which must be greater than 0" )
+            Ps[:F][:,env.S] .= 0.0  # forcely refresh mortality in the very last year 强制刷新最后一岁的死亡率为0
+        ## Section: malloc 内存预分配
+            # a. linearly fill capital & labor 线性填充资本和劳动供应
+            local tmpK1::Vector{Float64} = LinRange( Dt[:K][1], Dt[:K][env.T], env.T )
+            local tmpK2::Vector{Float64} = LinRange( Dt[:K][1], Dt[:K][env.T], env.T )
+            local tmpL1::Vector{Float64} = LinRange( Dt[:L][1], Dt[:L][env.T], env.T )
+            local tmpL2::Vector{Float64} = LinRange( Dt[:L][1], Dt[:L][env.T], env.T )
+            # b. initialization, evenly fill every year's labor among generations 平均填充每年每岁人的劳动力供应
+            for t in 2:env.T-1
+                Dst[:Lab][t,1:env.Sr] .= tmpL1[t] ./ env.Sr
+            end
+            # c. other convenient variables 其他快捷变量
+            local tmpVal = 1.0    .+  Pt[:z] .* Pt[:η]  .+ Pt[:ζ]
+            local πCoef  = Pt[:z] .* (Pt[:θ] .+ Pt[:η]) ./ tmpVal
+            local πMf    = Pt[:ζ] ./  tmpVal
+            local πMp    = Pt[:ϕ] ./  tmpVal
+            local πM     = πMf    .+  πMp
+            # d. convenient index 快捷索引
+            local idxS  = 1:env.S
+            local idxWorking = 1:env.Sr
+            local idxRetired = env.Sr+1:env.S
+            local idx2toT = 2:env.T
+            local idx1toT = 1:env.T
+            local idx2toTminus1 = 2:env.T-1
+            # e. save a copy of k_{s}, a_{s}, Φ_{s} for both init & final steady states
+            # NOTE: because we may over-write them, if we want better readiability of the code
+            local copy_InitSSk = ( k = Dst[:𝒜][1,:],     a = Dst[:a][1,:],     Φ = Dst[:Φ][1,:] )
+            local copy_FinaSSk = ( k = Dst[:𝒜][env.T,:], a = Dst[:a][env.T,:], Φ = Dst[:Φ][env.T,:] )
+
+
+        ## Section: Gauss-Seidel Iterations 搜索
+        for idxiter in 1:MaxIter
+            # check: NaN of Capital & Labor 资本和劳动的NaN值检查（必要，防止可能的数值错误后仍继续狂飙）
+            @assert( !any(isnan.(tmpK1)) , "NaN found in agg capital" )
+            @assert( !any(isnan.(tmpL1)) , "NaN found in agg labor" )
+
+            # Section: Firm Department & PAYG Pension 厂商部门与养老金
+            for t in idx2toTminus1
+                # 1. GDP, r, avg w GDP，利率，平均工资
+                Dt[:Y][t], Dt[:r][t], Dt[:w̄][t] =
+                    EasyEcon.CDProdFunc( Pt[:A][t], tmpK1[t], tmpL1[t], Pt[:β][t],
+                    κ = Pc[:κ], GetPrice = true, TechType = "Hicks"  )
+                # 2. wage profile 工资曲线
+                Dst[:w][t,idxWorking], Dt[:o][t] =
+                    EasyEcon.WageProfile( Dt[:w̄][t], Ps[:ε][idxWorking],
+                    Ps[:N][t,idxWorking], Dst[:Lab][t,idxWorking], GetScalingCoef = true  )
+                # 3. the benefits of PAYG pension 养老金给付
+                Dt[:Λ][t] = EasyEcon.PAYGPension( πCoef[t], # NOTE: diff
+                    Dst[:w][t,idxWorking], Ps[:N][t,idxS], Dst[:Lab][t,idxWorking], env.Sr )
+                # 4. average transfer amount from firm medical contribution to retired generations 当期企业医保缴纳对退休人员的平均补贴量
+                Dt[:𝕡][t] = EasyEcon.Get𝕡( Pt[:𝕓][t], πMf[t],  # NOTE: diff
+                    Dst[:w][t,idxWorking], Dst[:Lab][t,idxWorking], Ps[:N][t,idxS], env.Sr )
+            end # firm & pension ends
+
+            # Section: Household Department & Health Expenditure 家庭部门与医疗支出
+            # NOTE: there are three cases to compute in this section:
+            #       本节计算三种情形：
+            #       1. for those alive in t=1, still working, but change their paths in t>2,...
+            #       2. for those alive in t=1, have retired, but change their paths in t>2,...
+            #       3. for those born in t=1,...,T (i.e. on the transition path)
+            for s in 2:env.Sr
+            # NOTE: CASE 1: alive in t=1, working
+                # 1. prepare data
+                # NOTE: t = 1 (mark year); S = S-s+1 (left years to live); Sr = Sr-s+1 (left years to work)
+                #       remember, when s=Sr, we are standing at the beginning of the year of age Sr
+                local YearsToLive::Int = env.S  - s + 1
+                local YearsToWork::Int = env.Sr - s + 1
+                local tmpOriginData = DatSlice4Household(1, Dt,Dst,Pt,Ps,Pc,env, S = YearsToLive, Sr = YearsToWork,
+                    a1 = Dst[:a][1,s], Φ1 = Dst[:Φ][1,s], SearchType = "AliveInYear0Working"  )
+                # 2. optimization
+                local tmpRet = House.HHSolve( tmpOriginData, ReturnData = true )
+                # 3. extract asset (a_{s}) & UEBMI-indi (Φ_{s})
+                House.ExtractAPhi!( tmpRet, tmpOriginData, a1 = Dst[:a][1,s] )
+                # 4. distribute results
+                # NOTE: k,a,Φ (len=S+1) have an extra element: bequest, so, drop it
+                diagw!( Dst[:𝒜], tmpRet[:ks][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:a], tmpRet[:as][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:Φ], tmpRet[:Φs][1:YearsToLive], offset = s - 1 )
+                # NOTE: c,M,MA,MB (len=S)
+                diagw!( Dst[:c], tmpRet[:cs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:Lab], tmpRet[:ls][1:YearsToWork], offset = s - 1 )
+                diagw!( Dst[:m], tmpRet[:Ms][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:MA], tmpRet[:MAs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:MB], tmpRet[:MBs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:ΦGaps], tmpRet[:ΦGaps][1:YearsToLive], offset = s - 1 )
+            end
+            for s in env.Sr+1:env.S
+            # NOTE: CASE 2: alive in t=1, retired
+                # 1. prepare data
+                # NOTE: t = 1 (mark year); S = S-s+1 (left years to live)
+                local YearsToLive::Int = env.S  - s + 1
+                local tmpOriginData = DatSlice4Household(1, Dt,Dst,Pt,Ps,Pc,env, S = YearsToLive, Sr = 0,
+                    a1 = Dst[:a][1,s], Φ1 = Dst[:Φ][1,s], SearchType = "AliveInYear0Retired"  )
+                # 2. optimization
+                local tmpRet = House.HHSolve_Retired( tmpOriginData, ReturnData = true )
+                # 3. extract asset (a_{s}) & UEBMI-indi (Φ_{s})
+                House.ExtractAPhi_Retired!( tmpRet, tmpOriginData, a1 = Dst[:a][1,s] )
+                # 4. distribute results
+                # NOTE: k,a,Φ (len=S+1) have an extra element: bequest, so, drop it
+                diagw!( Dst[:𝒜], tmpRet[:ks][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:a], tmpRet[:as][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:Φ], tmpRet[:Φs][1:YearsToLive], offset = s - 1 )
+                # NOTE: c,M,MA,MB (len=S)
+                diagw!( Dst[:c], tmpRet[:cs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:m], tmpRet[:Ms][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:MA], tmpRet[:MAs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:MB], tmpRet[:MBs][1:YearsToLive], offset = s - 1 )
+                diagw!( Dst[:ΦGaps], tmpRet[:ΦGaps][1:YearsToLive], offset = s - 1 )
+            end
+            # NOTE: refresh the capital/asset/UEBMI-indi in our initial steady state
+                Dst[:𝒜][1,idxS] = copy_InitSSk.k
+                Dst[:a][1,idxS] = copy_InitSSk.a
+                Dst[:Φ][1,idxS] = copy_InitSSk.Φ
+            for t in 1:env.T-1
+            # NOTE: CASE 3: born on transition path
+                # 1. prepare data
+                # NOTE: S = S, Sr = Sr, t = t
+                #       everyone has a complete life-cycle
+                local tmpOriginData = DatSlice4Household(t, Dt,Dst,Pt,Ps,Pc,env, S = env.S, Sr = env.Sr,
+                    a1 = 0.0, Φ1 = 0.0, SearchType = "BornInTransition"  )
+                # 2. optimization
+                local tmpRet = House.HHSolve( tmpOriginData, ReturnData = true )
+                # 3. extract asset (a_{s}) & UEBMI-indi (Φ_{s})
+                House.ExtractAPhi!( tmpRet, tmpOriginData, a1 = 0.0 )
+                # 4. distribute results
+                # NOTE: k,a,Φ (len=S+1) have an extra element: bequest, so, drop it
+                diagw!( Dst[:𝒜], tmpRet[:ks][idxS], offset = 1 - t )
+                diagw!( Dst[:a], tmpRet[:as][idxS], offset = 1 - t )
+                diagw!( Dst[:Φ], tmpRet[:Φs][idxS], offset = 1 - t )
+                # NOTE: c,M,MA,MB (len=S)
+                diagw!( Dst[:c], tmpRet[:cs][idxS], offset = 1 - t )
+                diagw!( Dst[:Lab], tmpRet[:ls][idxWorking], offset = 1 - t )
+                diagw!( Dst[:m], tmpRet[:Ms][idxS], offset = 1 - t )
+                diagw!( Dst[:MA], tmpRet[:MAs][idxS], offset = 1 - t )
+                diagw!( Dst[:MB], tmpRet[:MBs][idxS], offset = 1 - t )
+                diagw!( Dst[:ΦGaps], tmpRet[:ΦGaps][idxS], offset = 1 - t )
+            end
+            # NOTE: refresh the capital/asset/UEBMI-indi in our final steady state
+                Dst[:𝒜][env.T,idxS] = copy_FinaSSk.k
+                Dst[:a][env.T,idxS] = copy_FinaSSk.a
+                Dst[:Φ][env.T,idxS] = copy_FinaSSk.Φ
+
+
+            # Section: Fiscal, Consumption & Labor Aggregation 财政，消费与劳动力市场
+            for t in idx2toTminus1
+                # 1. tax revenues 财政收入
+                Dt[:TRc][t] = Pc[:μ] * sum( Dst[:c][t, idxS]   .* Ps[:N][t,idxS] )
+                Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, idxWorking] .* Ps[:N][t,idxWorking] .* Dst[:w][t, idxWorking] )
+                # 2. aggregated consumption 总消费
+                Dt[:C][t] = sum( Dst[:c][t,idxS] .* Ps[:N][t,idxS] )
+                # 3. the gaps of the social pooling account of UE-BMI (positive for gap, negative for surplus)
+                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] .* Dst[:MB][t, idxS] .* Ps[:N][t,idxS] ) )
+                Dt[:LI][t] -= ( 1 .- Pt[:𝕒][t] .- Pt[:𝕓][t] ) .* Pt[:ζ][t] ./
+                    ( 1 .+ Pt[:η][t] + Pt[:ζ][t] ) .*
+                    sum( Ps[:N][t,idxWorking] .* Dst[:w][t,idxWorking] .* Dst[:Lab][t,idxWorking] )
+                # 4. update aggregated labor supply 更新劳动力供应
+                tmpL2[t] = sum( Ps[:N][t,idxWorking] .* Dst[:Lab][t,idxWorking] )
+                # 5. update GDP using new L 更新GDP
+                Dt[:Y][t] = EasyEcon.CDProdFunc( Pt[:A][t], tmpK1[t], tmpL2[t], Pt[:β][t], κ = Pc[:κ], GetPrice = true, TechType = "Hicks"  )[1]
+            end # fiscal, consumption & labor-agg end
+
+            # Section: Government debt 政府债务
+            # NOTE: in this paper, D is always zero (self-supported fiscal budget)
+            for t in idx2toTminus1
+                # 1. government outstanding debt, through the capital market 政府负债，通过资本市场均衡
+                Dt[:D][t] = tmpK1[t] - sum( Ps[:N][t,idxS] .* ( Dst[:a][t,idxS] .+ Dst[:Φ][t,idxS] ) )
+                Dt[:D][t] = max( 0.0, min( Dt[:D][t], Dt[:Y][t] * Pt[:D2Ycap][t] ) )
+                Dt[:D2Y][t] = Dt[:D][t] / Dt[:Y][t]
+            end # government
+
+            # Section: Government purchase, Investment & Capital 政府购买，投资与资本市场
+            # NOTE: because we use D_{t+1} to compute G_{t} (well ... though doesnot matter in this paper but for generality)
+            #       we seperate D_{t} from other variables, in a single loop
+            for t in idx2toTminus1
+                # 1. government purchase 政府购买
+                Dt[:G][t] = Dt[:TRw][t] + Dt[:TRc][t] + Dt[:D][t+1] -
+                            Dt[:LI][t] - Dt[:r][t] * Dt[:D][t]
+                # 2. investment 投资
+                Dt[:I][t] = Dt[:Y][t] - Dt[:G][t] - Dt[:C][t]
+
+            end # gov-purchase, investment & capital-agg end
+
+            # Section: Reaggregate Capital 汇总资本
+            # NOTE: notice the index of looping! :)
+            # NOTE: re-aggregate capital through the dynamics of capital growth
+            for t in reverse(idx2toTminus1)
+                tmpK2[t]  = tmpK1[t+1] - Dt[:I][t]
+                tmpK2[t] /= 1.0 - Pc[:κ]
+            end
+
+
+            # Convergence check & go to the next loop 收敛检查
+            # 1. compute errors, using a minor number to avoid exact zeros
+            # NOTE: we care the maximum of the errors of a complete path 我们关心整条序列误差的最大值
+            local Err = ( K = findmax( abs.(tmpK2 ./ tmpK1 .- 1.0 )[idx2toTminus1] )[1],
+                          L = findmax( abs.(tmpL2 ./ tmpL1 .- 1.0 )[idx2toTminus1] )[1]   )
+            # 2. check
+            if ( Err.K < atol ) & (Err.L < atol)  # converged
+                # 1. save the converged K,L, using mean values
+                Dt[:K][idx2toTminus1] = ( tmpK1 .+ tmpK2 )[idx2toTminus1] ./ 2
+                Dt[:L][idx2toTminus1] = ( tmpL1 .+ tmpL2 )[idx2toTminus1] ./ 2
+                # 2. print final summary (if not silently solved)
+                if PrintMode != "silent"
+                    println("\n\t+ Status: Converged")  # status
+                    println("\t+ Round: ", idxiter)
+                    println("\t+ Max Relative Errors: ",Err)  # print error first
+                    # SummaryYear( t, Dt, Dst, Pt, Ps, env.S, env.Sr )  # print the details of the steady state
+                end
+                break  # ends iteration
+            elseif idxiter == MaxIter # diverged or too few maximum rounds of loops
+                # 1. save the converged K,L, using mean values
+                Dt[:K][idx2toTminus1] = ( tmpK1 .+ tmpK2 )[idx2toTminus1] ./ 2
+                Dt[:L][idx2toTminus1] = ( tmpL1 .+ tmpL2 )[idx2toTminus1] ./ 2
+                # 2. print final summary (if not silently solved)
+                if PrintMode != "silent"
+                    println("\n\t+ Status: Maximum iteration reached, not converged")
+                    println("\t+ Round: ", idxiter)
+                    println("\t+ Max Relative Errors: ",Err)  # print error first
+                    # SummaryYear( t, Dt, Dst, Pt, Ps, env.S, env.Sr )  # print the details of the steady state
+                end
+                break  # ends iteration
+
+            else  # go to the next loop
+                # 1. check if the updated labor supply touches the bottom of zero
+                local chkidx = (tmpL2 .< 0.0) .| (tmpL2 .!= real.(tmpL2))
+                tmpL2[chkidx] .= 0.001
+                # 2. update labor supply
+                tmpL1[idx2toTminus1] .+= StepLen .* ( tmpL2 .- tmpL1 )[idx2toTminus1]
+                # 3. use the magic number to set the bottom of capital, which bounds the interest rate in a reasonable range
+                local tmpKfloor = MagicNum .* findmin(tmpL1)[1]
+                println( findmin(tmpK1 .- tmpK2)[1] )
+                # 4. check & update capital supply
+                chkidx = (tmpK2 .< tmpKfloor) .| (tmpK2 .!= real.(tmpK2))
+                tmpK2[chkidx] .= tmpKfloor
+                tmpK1[idx2toTminus1] .+= StepLen .* ( tmpK2 .- tmpK1 )[idx2toTminus1]
+                # 5. print information, according to :PrintMode
+                if PrintMode in ["full", "concise"]
+                    println("\n\t+ Round: ", idxiter)
+                    println("\t+ Max Relative Errors: ", Err)
+                    # println("\t+ Updating of Kap: ",round.([ OriGuess[1], tmpK2, Dt[:K][t] ],digits=6) ) # then print the updating process of K,L
+                    # println("\t+ Updating of Lab: ",round.([ OriGuess[2], tmpL2, Dt[:L][t] ],digits=6) )
+                    # println("\t+ NOTE: guess -> re-aggregated -> updated")
+                end
+                # if PrintMode == "full"
+                #     # SummaryYear( t, Dt, Dst, Pt, Ps, env.S, env.Sr )
+                # end
+                # 6. explicitly write continue (as a reminder without practical jobs)
+                continue
+
+            end  # branch ends
+
+        end  # Gauss-Seidel ends
+        # nominal returns
+        return nothing
+    end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

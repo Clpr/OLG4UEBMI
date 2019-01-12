@@ -11,7 +11,7 @@
       import Statistics: mean  # standard aggregating functions 基本汇总用函数
       # import Dates  # for log 日志用日期模块
    # 3. import 3rd-party public libraries 导入第三方公开库&函数
-      # import DataFrames, CSV  # for data I/O 数据读写用
+      import DataFrames, CSV  # for data I/O 数据读写用
       # import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
       import EasyIO  # masked I/O methods 数据I/O
@@ -45,49 +45,57 @@
 
 # ======================= Section: Initial Steady State 初始稳态搜索
 # NOTE: PrintMode in ["full", "concise", "final", "silent"]
-# 0. print a flag 打印章节名
-println("+ Section: Initial Steady State Search ...")
-# 1. prepare guesses 准备猜测/初始值
-Guess = (
-   r = 0.08,  # we guess interest rate, a relative price, rather than an absolute capital factor 猜测利率这样一个相对价格而非猜测资本存量的绝对数值
-   L = 0.2  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
-)
-# 2. begin searching
-@time EasySearch.SteadyState!( 1, Guess,
-   Dt, Dst, Pt, Ps, Pc, env,
-   atol = 1E-8,  # tolerance of Gauss-Seidel iteration
-   MaxIter = 50,  # maximum loops
-   PrintMode = "final",  # mode of printing
-   MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
-   StepLen = 0.5  # relative step length to update guesses, in range (0,1]
-)
-# 3. plotting & output
-EasyPlot.Plot_SteadyState( 1, Dt, Dst, Pt, Ps, Pc, env,
-   outpdf = string("./output/", "InitSS_", EasyPlot.LogTag(), ".pdf" )
+   # 0. print a flag 打印章节名
+   println("+ Section: Initial Steady State Search ...")
+   # 1. prepare guesses 准备猜测/初始值
+   Guess = (
+      r = 0.08,  # we guess interest rate, a relative price, rather than an absolute capital factor 猜测利率这样一个相对价格而非猜测资本存量的绝对数值
+      L = 0.2  # labor has a relatively constant scale when demography normalized 标准化人口后劳动力供应的规模也相对稳定
    )
+   # 2. begin searching
+   @time EasySearch.SteadyState!( 1, Guess,
+      Dt, Dst, Pt, Ps, Pc, env,
+      atol = 1E-8,  # tolerance of Gauss-Seidel iteration
+      MaxIter = 50,  # maximum loops
+      PrintMode = "silent",  # mode of printing
+      MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
+      StepLen = 0.5  # relative step length to update guesses, in range (0,1]
+   )
+   # 3. plotting & output
+   EasyPlot.Plot_SteadyState( 1, Dt, Dst, Pt, Ps, Pc, env,
+      outpdf = string("./output/", "InitSS_", EasyIO.LogTag(), ".pdf" )
+      )
 
 
 # ======================= Section: Final Steady State 最终稳态搜索
-println("+ Section: Final Steady State Search ...")
-Guess = ( r = 0.12, L = 0.75 )
-# 2. begin searching
-@time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
-   atol = 1E-6, MaxIter = 600,
-   PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
-# 3. plotting & output
-EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
-   outpdf = string("./output/", "FinaSS_", EasyPlot.LogTag(), ".pdf" )
-   )
+   println("+ Section: Final Steady State Search ...")
+   Guess = ( r = 0.12, L = 0.75 )
+   # 2. begin searching
+   @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
+      atol = 1E-6, MaxIter = 800,
+      PrintMode = "silent", MagicNum = 2.0, StepLen = 0.5 )
+   # 3. plotting & output
+   EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
+      outpdf = string("./output/", "FinaSS_", EasyIO.LogTag(), ".pdf" )
+      )
+
+
+# ======================= Section: Transition 转轨路径搜索
+   println("+ Section: Transition Search ...")
+   @time EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
+      atol = 1E-6, MaxIter = 30,
+      PrintMode = "full", MagicNum = 2.0, StepLen = 0.5 )
 
 
 
 
+EasyIO.writecsv( "./sandbox/testK.csv", Dt[:K] )
+EasyIO.writecsv( "./sandbox/testL.csv", Dt[:L] )
+EasyIO.writecsv( "./sandbox/testY.csv", Dt[:Y] )
 
+EasyIO.writecsv( "./sandbox/Testk2.csv", Dst[:𝒜] )
 
-# EasyIO.WriteMat( Ps[:N] , output = "CookedDemography.csv" )
-# EasyIO.WriteMat( Ps[:F] , output = "CookedMortalities.csv" )
-#
-#
+EasyIO.writecsv( "./sandbox/testI.csv", Dt[:I] )
 
 
 

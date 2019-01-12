@@ -55,7 +55,7 @@ Pt = Dict(
     :A => tmpA,  # urban technology 城镇技术
     :β  => fill(0.55,env.T),  # capital income share 资本收入占比
     # General Fiscal 一般财政
-    :D2Y => fill(0.0,env.T),  # upper bound of gov outsanding debt to GDP 未偿债务上限
+    :D2Ycap => fill(0.0,env.T),  # upper bound of gov outsanding debt to GDP 未偿债务上限
     # Urban Pension 城镇养老金计划
     :z  => fill(0.85,env.T),  # collection rates 收缴率
     :η  => fill(0.2,env.T),  # contribution rate: firm -> pension 缴纳（比例）：企业

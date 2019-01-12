@@ -5,23 +5,8 @@ Masked APIs of plotting; based on PyPlot
 """
 module EasyPlot
    import PyPlot  # based on PyPlot
-   import Dates  # for time tags
 
 # -----------------------------------------------------------------------------
-"""
-   LogTag()
-
-generates a tag of logging; the tag can be used to mark time or name files.
-returns a String.
-"""
-function LogTag()
-   local tagstr = replace(string(Dates.now()), "-" => "_" )
-   tagstr = replace( tagstr, "T" => "_" )
-   tagstr = replace( tagstr, ":" => "_" )
-   tagstr = replace( tagstr, "." => "_" )
-   return tagstr::String
-end
-# ----------
 # a public Dict of the attributes of fonts; modify a copy of it in functions
 public_fontdict = Dict(
    "family" => "Times New Roman",
