@@ -99,7 +99,8 @@
       outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
       picsize = (19.2,10.8) )
 
-
+# ======================= Section: Save Model 输出保存模型
+   EasyIO.SaveModel( string( "./output/Model_", EasyIO.LogTag(), "/" )  , Dt, Dst, Pt, Ps, Pc, env )
 
 
 

@@ -54,16 +54,33 @@ function SaveModel( OutPath::String, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc
     catch
     end
 
-    # Part 1: output matrices
-    # 1. demography
-    writecsv( string(OutPath,"Population.csv"), Ps[:N] )
-    writecsv( string(OutPath,"Mortality.csv"), Ps[:F] )
-    
+    # Part 1: parameters
+        # 1. demography
+        writecsv( string(OutPath,"Population.csv"), Ps[:N] )
+        writecsv( string(OutPath,"Mortality.csv"), Ps[:F] )
+        # 2. age-specific
+        writecsv( string(OutPath,"Index_Age.csv"), Dst[:Age] )
+        writecsv( string(OutPath,"ma2mb.csv"), Ps[:p] )
+        writecsv( string(OutPath,"WageProfile.csv"), Ps[:ε] )
+        # 3. constants
+        writecsv( string(OutPath,"ConstParameters.csv"), Pc )
+        # 4. year-related parameters
+        writecsv( string(OutPath,"YearParameters.csv"), Pt )
 
+    # Part 2: year-related data
+        writecsv( string(OutPath,"Index_Year.csv"), Dst[:Year] )
+        writecsv( string(OutPath,"YearData.csv"), Dt )
 
-
-
-
+    # Part 3: matrix data
+        writecsv( string(OutPath,"Mat_Consumption.csv"), Dst[:c] )
+        writecsv( string(OutPath,"Mat_Labor.csv"), Dst[:Lab] )
+        writecsv( string(OutPath,"Mat_MedicalExp.csv"), Dst[:m] )
+        writecsv( string(OutPath,"Mat_OutpatientExp.csv"), Dst[:MA] )
+        writecsv( string(OutPath,"Mat_InpatientExp.csv"), Dst[:MB] )
+        writecsv( string(OutPath,"Mat_Capital.csv"), Dst[:𝒜] )
+        writecsv( string(OutPath,"Mat_Asset.csv"), Dst[:a] )
+        writecsv( string(OutPath,"Mat_UEBMI_Indi.csv"), Dst[:Φ] )
+        writecsv( string(OutPath,"Mat_Wage.csv"), Dst[:w] )
 
     return nothing
 end
