@@ -46,7 +46,7 @@ returns nothing.
 """
 function SaveModel( OutPath::String, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple )
     # check OutPath
-    @assert( isdir(OutPath) , "requries a path, not file or something else" )
+    # @assert( isdir(OutPath) , "requries a path, not file or something else" )
     @assert( OutPath[end] == '/' , "requries a '/' to end your path" )
     # check if the assigned folder exists
     try
