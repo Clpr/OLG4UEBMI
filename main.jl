@@ -56,15 +56,15 @@
    @time EasySearch.SteadyState!( 1, Guess,
       Dt, Dst, Pt, Ps, Pc, env,
       atol = 1E-8,  # tolerance of Gauss-Seidel iteration
-      MaxIter = 50,  # maximum loops
+      MaxIter = 1000,  # maximum loops
       PrintMode = "final",  # mode of printing
       MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
       StepLen = 0.5  # relative step length to update guesses, in range (0,1]
    )
    # 3. plotting & output
-   EasyPlot.Plot_SteadyState( 1, Dt, Dst, Pt, Ps, Pc, env,
-      outpdf = string("./output/", "InitSS_", EasyIO.LogTag(), ".pdf" )
-      )
+   # EasyPlot.Plot_SteadyState( 1, Dt, Dst, Pt, Ps, Pc, env,
+   #    outpdf = string("./output/", "InitSS_", EasyIO.LogTag(), ".pdf" )
+   #    )
 
 
 # ======================= Section: Final Steady State 最终稳态搜索
@@ -72,22 +72,22 @@
    Guess = ( r = 0.12, L = 0.75 )
    # 2. begin searching
    @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
-      atol = 1E-6, MaxIter = 100,
+      atol = 1E-6, MaxIter = 1000,
       PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
    # 3. plotting & output
-   EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
-      outpdf = string("./output/", "FinaSS_", EasyIO.LogTag(), ".pdf" )
-      )
+   # EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
+   #    outpdf = string("./output/", "FinaSS_", EasyIO.LogTag(), ".pdf" )
+   #    )
 
 
 # ======================= Section: Transition 转轨路径搜索
    println("+ Section: Transition Search ...")
    @time PerfLog = EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
-      atol = 1E-4, MaxIter = 1000,
-      PrintMode = "full", MagicNum = 2.0, StepLen = 0.5, ReturnLog = true )
+      atol = 1E-3, MaxIter = 500,
+      PrintMode = "full", MagicNum = 2.0, StepLen = 0.7, ReturnLog = true )
 
 # ======================= Section: Performance Profile 收敛性能评估
-   EasyPlot.Plot_PerformProfile( PerfLog ; startiter = 50 )
+   # EasyPlot.Plot_PerformProfile( PerfLog ; startiter = 50 )
 
 # ======================= Section: Compute Other Economic Indicators/Variables 计算其他经济变量
    EasySearch.ProcAfterTransition!( Dt, Dst, Pt, Ps, Pc, env )
@@ -98,11 +98,6 @@
       LineWidth = 1.0,  # the width of lines to plot
       outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
       picsize = (19.2,10.8) )
-
-
-
-
-
 
 
 

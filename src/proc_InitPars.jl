@@ -20,7 +20,7 @@ Pc = Dict(
 # --------------------------------------- A special section to generate technology series 专门章节用于生成技术系数序列
 # NOTE: because technolgies are piecewise functions of time t
     # 1. first, initialize it as one 初始化
-    tmpA = fill(0.1,env.T)
+    tmpA = fill(0.10,env.T)
     # 2. then, set time points & convert them to index 设置转折点以分割时期
     tmppt = [1980, 2008, 2018]
     tmppt = [ x - env.START_YEAR + 1 for x in tmppt ]
@@ -38,7 +38,7 @@ Pc = Dict(
 
 
 # --------------------------------------- A special section to generate m/c coefficient 用于生成医疗/消费比例
-# NOTE: allows to read in external data file
+# NOTE: allows to read in external data file, using env.M2C
     tmpq = Array(LinRange( 0.07, 0.25, env.T ))
 
 

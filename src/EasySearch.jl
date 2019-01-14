@@ -732,7 +732,6 @@ module EasySearch
                 tmpL1[idx2toTminus1] .+= StepLen .* ( tmpL2 .- tmpL1 )[idx2toTminus1]
                 # 3. use the magic number to set the bottom of capital, which bounds the interest rate in a reasonable range
                 local tmpKfloor = MagicNum .* findmin(tmpL1)[1]
-                println( findmin(tmpK1 .- tmpK2)[1] )
                 # 4. check & update capital supply
                 chkidx = (tmpK2 .< tmpKfloor) .| (tmpK2 .!= real.(tmpK2))
                 tmpK2[chkidx] .= tmpKfloor
