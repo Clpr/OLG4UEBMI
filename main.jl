@@ -57,7 +57,7 @@
       Dt, Dst, Pt, Ps, Pc, env,
       atol = 1E-8,  # tolerance of Gauss-Seidel iteration
       MaxIter = 50,  # maximum loops
-      PrintMode = "silent",  # mode of printing
+      PrintMode = "final",  # mode of printing
       MagicNum = 2.0,  # magic number, the lower bound of K/L (capital per labor)
       StepLen = 0.5  # relative step length to update guesses, in range (0,1]
    )
@@ -73,7 +73,7 @@
    # 2. begin searching
    @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
       atol = 1E-6, MaxIter = 800,
-      PrintMode = "silent", MagicNum = 2.0, StepLen = 0.5 )
+      PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
    # 3. plotting & output
    EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
       outpdf = string("./output/", "FinaSS_", EasyIO.LogTag(), ".pdf" )
@@ -82,9 +82,9 @@
 
 # ======================= Section: Transition 转轨路径搜索
    println("+ Section: Transition Search ...")
-   @time EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
-      atol = 1E-6, MaxIter = 30,
-      PrintMode = "full", MagicNum = 2.0, StepLen = 0.5 )
+   @time PerfLog = EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
+      atol = 1E-6, MaxIter = 100,
+      PrintMode = "full", MagicNum = 2.0, StepLen = 0.5, ReturnLog = true )
 
 
 

@@ -32,8 +32,8 @@ function Plot_SteadyState( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::
    # plotting
    PyPlot.figure( figsize = picsize )
    PyPlot.subplot(2,2,1)
-      PyPlot.plot(Xval, Dst[:𝒜][t,:] )
-      PyPlot.xlabel("Age"); PyPlot.ylabel("Capital"); PyPlot.grid(true)
+      PyPlot.plot(Xval, Dst[:𝒜][t,:] .* Ps[:N][t,:] )
+      PyPlot.xlabel("Age"); PyPlot.ylabel("k Distribution among ages"); PyPlot.grid(true)
    PyPlot.subplot(2,2,2)
       PyPlot.plot(Xval, Dst[:c][t,:] )
       PyPlot.xlabel("Age"); PyPlot.ylabel("Consumption"); PyPlot.grid(true)

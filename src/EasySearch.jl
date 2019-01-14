@@ -488,7 +488,8 @@ module EasySearch
         MaxIter::Int = 100,  # maximum loops
         PrintMode::String = "full",  # mode of printing, one of ["full","concise","final","silent"]
         MagicNum::Real = 2.0,  # magic number, the lower bound of K/L (capital per labor)
-        StepLen::Real = 0.5 ) # relative step length to update guesses, in range (0,1]
+        StepLen::Real = 0.5, # relative step length to update guesses, in range (0,1]
+        ReturnLog::Bool = false ) # whether to return a Dict of convergence (errors per loop)
         # ------------
         ## Section: validation
             @assert( PrintMode in ["full","concise","final","silent"] , "undefined PrintMode string" )
@@ -522,6 +523,8 @@ module EasySearch
             # NOTE: because we may over-write them, if we want better readiability of the code
             local copy_InitSSk = ( k = Dst[:𝒜][1,:],     a = Dst[:a][1,:],     Φ = Dst[:Φ][1,:] )
             local copy_FinaSSk = ( k = Dst[:𝒜][env.T,:], a = Dst[:a][env.T,:], Φ = Dst[:Φ][env.T,:] )
+            # f. logs of performance/convergence 迭代日志
+            local PerfLog = Dict( :K => Array{Float64,1}(), :L => Array{Float64,1}() )
 
 
         ## Section: Gauss-Seidel Iterations 搜索
@@ -639,11 +642,11 @@ module EasySearch
 
             # Section: Fiscal, Consumption & Labor Aggregation 财政，消费与劳动力市场
             for t in idx2toTminus1
-                # 1. tax revenues 财政收入
-                Dt[:TRc][t] = Pc[:μ] * sum( Dst[:c][t, idxS]   .* Ps[:N][t,idxS] )
-                Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, idxWorking] .* Ps[:N][t,idxWorking] .* Dst[:w][t, idxWorking] )
-                # 2. aggregated consumption 总消费
+                # 1. aggregated consumption 总消费
                 Dt[:C][t] = sum( Dst[:c][t,idxS] .* Ps[:N][t,idxS] )
+                # 2. tax revenues 财政收入
+                Dt[:TRc][t] = Pc[:μ] * Dt[:C][t]
+                Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, idxWorking] .* Ps[:N][t,idxWorking] .* Dst[:w][t, idxWorking] )
                 # 3. the gaps of the social pooling account of UE-BMI (positive for gap, negative for surplus)
                 Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] .* Dst[:MB][t, idxS] .* Ps[:N][t,idxS] ) )
                 Dt[:LI][t] -= ( 1 .- Pt[:𝕒][t] .- Pt[:𝕓][t] ) .* Pt[:ζ][t] ./
@@ -690,6 +693,9 @@ module EasySearch
             # NOTE: we care the maximum of the errors of a complete path 我们关心整条序列误差的最大值
             local Err = ( K = findmax( abs.(tmpK2 ./ tmpK1 .- 1.0 )[idx2toTminus1] )[1],
                           L = findmax( abs.(tmpL2 ./ tmpL1 .- 1.0 )[idx2toTminus1] )[1]   )
+            # performance log 记录误差
+                append!(PerfLog[:K], Err.K)
+                append!(PerfLog[:L], Err.L)
             # 2. check
             if ( Err.K < atol ) & (Err.L < atol)  # converged
                 # 1. save the converged K,L, using mean values
@@ -747,7 +753,11 @@ module EasySearch
 
         end  # Gauss-Seidel ends
         # nominal returns
-        return nothing
+        if ReturnLog
+            return PerfLog::Dict
+        else
+            return nothing
+        end
     end
 
 

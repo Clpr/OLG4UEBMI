@@ -20,13 +20,13 @@ Pc = Dict(
 # --------------------------------------- A special section to generate technology series 专门章节用于生成技术系数序列
 # NOTE: because technolgies are piecewise functions of time t
     # 1. first, initialize it as one 初始化
-    tmpA = ones(env.T)
+    tmpA = fill(0.1,env.T)
     # 2. then, set time points & convert them to index 设置转折点以分割时期
     tmppt = [1980, 2008, 2018]
     tmppt = [ x - env.START_YEAR + 1 for x in tmppt ]
     # 3. modify technology growth path 调整技术
         # 3.1 part 1: before 1980 (before open & reform) 改革开放前
-        tmpA[1:tmppt[1]] = 1.0 .* 1.01 .^ (0:tmppt[1]-1)
+        tmpA[1:tmppt[1]] = tmpA[1] .* 1.01 .^ (0:tmppt[1]-1)
         # 3.2 part 2: 1980 ~ 2008 (before financial crisis) 金融危机前
         tmpA[tmppt[1]+1:tmppt[2]] = tmpA[tmppt[1]] .* cumprod( 1 .+ LinRange(0.04, 0.045, tmppt[2]-tmppt[1]) )
         # 3.3 part 3: 2008 ~2018 (recent 10 years) 最近十年
