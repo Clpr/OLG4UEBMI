@@ -372,7 +372,7 @@ module EasySearch
                 Dt[:TRc][t] = Pc[:μ] * sum( Dst[:c][t, 1:env.S]   .* Ps[:N][t,1:env.S] )  # consumption tax 消费税
                 Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, 1:env.Sr] .* Ps[:N][t,1:env.Sr] .* Dst[:w][t, 1:env.Sr] )  # wage tax 工资税
                 # 2. the gaps of the social pooling account of UE-BMI (positive for gap, negative for surplus)
-                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] .* Dst[:MB][t, 1:env.S] .* Ps[:N][t,1:env.S] ) )
+                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] ) .* Dst[:MB][t, 1:env.S] .* Ps[:N][t,1:env.S] )
                 Dt[:LI][t] -= ( 1 .- Pt[:𝕒][t] .- Pt[:𝕓][t] ) .* Pt[:ζ][t] ./ ( 1 .+ Pt[:η][t] + Pt[:ζ][t] ) .* sum( Ps[:N][t,1:env.Sr] .* Dst[:w][t, 1:env.Sr] .* Dst[:Lab][t, 1:env.Sr] )
 
             # SubSection 6: update aggregated labor supply 更新劳动力供应
@@ -519,6 +519,8 @@ module EasySearch
             local idx2toT = 2:env.T
             local idx1toT = 1:env.T
             local idx2toTminus1 = 2:env.T-1
+            local idx1toTminus1 = 1:env.T-1
+
             # e. save a copy of k_{s}, a_{s}, Φ_{s} for both init & final steady states
             # NOTE: because we may over-write them, if we want better readiability of the code
             local copy_InitSSk = ( k = Dst[:𝒜][1,:],     a = Dst[:a][1,:],     Φ = Dst[:Φ][1,:] )
@@ -534,7 +536,7 @@ module EasySearch
             @assert( !any(isnan.(tmpL1)) , "NaN found in agg labor" )
 
             # Section: Firm Department & PAYG Pension 厂商部门与养老金
-            for t in idx2toTminus1
+            for t in idx1toTminus1
                 # 1. GDP, r, avg w GDP，利率，平均工资
                 Dt[:Y][t], Dt[:r][t], Dt[:w̄][t] =
                     EasyEcon.CDProdFunc( Pt[:A][t], tmpK1[t], tmpL1[t], Pt[:β][t],
@@ -641,14 +643,14 @@ module EasySearch
 
 
             # Section: Fiscal, Consumption & Labor Aggregation 财政，消费与劳动力市场
-            for t in idx2toTminus1
+            for t in idx1toTminus1
                 # 1. aggregated consumption 总消费
                 Dt[:C][t] = sum( Dst[:c][t,idxS] .* Ps[:N][t,idxS] )
                 # 2. tax revenues 财政收入
                 Dt[:TRc][t] = Pc[:μ] * Dt[:C][t]
                 Dt[:TRw][t] = Pc[:σ] * sum( Dst[:Lab][t, idxWorking] .* Ps[:N][t,idxWorking] .* Dst[:w][t, idxWorking] )
                 # 3. the gaps of the social pooling account of UE-BMI (positive for gap, negative for surplus)
-                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] .* Dst[:MB][t, idxS] .* Ps[:N][t,idxS] ) )
+                Dt[:LI][t] = sum( ( 1 .- Pt[:cpB][t] ) .* Dst[:MB][t, idxS] .* Ps[:N][t,idxS] )
                 Dt[:LI][t] -= ( 1 .- Pt[:𝕒][t] .- Pt[:𝕓][t] ) .* Pt[:ζ][t] ./
                     ( 1 .+ Pt[:η][t] + Pt[:ζ][t] ) .*
                     sum( Ps[:N][t,idxWorking] .* Dst[:w][t,idxWorking] .* Dst[:Lab][t,idxWorking] )
@@ -660,7 +662,7 @@ module EasySearch
 
             # Section: Government debt 政府债务
             # NOTE: in this paper, D is always zero (self-supported fiscal budget)
-            for t in idx2toTminus1
+            for t in idx1toTminus1
                 # 1. government outstanding debt, through the capital market 政府负债，通过资本市场均衡
                 Dt[:D][t] = tmpK1[t] - sum( Ps[:N][t,idxS] .* ( Dst[:a][t,idxS] .+ Dst[:Φ][t,idxS] ) )
                 Dt[:D][t] = max( 0.0, min( Dt[:D][t], Dt[:Y][t] * Pt[:D2Ycap][t] ) )
@@ -670,7 +672,7 @@ module EasySearch
             # Section: Government purchase, Investment & Capital 政府购买，投资与资本市场
             # NOTE: because we use D_{t+1} to compute G_{t} (well ... though doesnot matter in this paper but for generality)
             #       we seperate D_{t} from other variables, in a single loop
-            for t in idx2toTminus1
+            for t in idx1toTminus1
                 # 1. government purchase 政府购买
                 Dt[:G][t] = Dt[:TRw][t] + Dt[:TRc][t] + Dt[:D][t+1] -
                             Dt[:LI][t] - Dt[:r][t] * Dt[:D][t]
@@ -682,7 +684,7 @@ module EasySearch
             # Section: Reaggregate Capital 汇总资本
             # NOTE: notice the index of looping! :)
             # NOTE: re-aggregate capital through the dynamics of capital growth
-            for t in reverse(idx2toTminus1)
+            for t in env.T-1:-1:2
                 tmpK2[t]  = tmpK1[t+1] - Dt[:I][t]
                 tmpK2[t] /= 1.0 - Pc[:κ]
             end

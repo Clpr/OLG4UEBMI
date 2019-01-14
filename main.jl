@@ -72,7 +72,7 @@
    Guess = ( r = 0.12, L = 0.75 )
    # 2. begin searching
    @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
-      atol = 1E-6, MaxIter = 800,
+      atol = 1E-6, MaxIter = 100,
       PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
    # 3. plotting & output
    EasyPlot.Plot_SteadyState( env.T, Dt, Dst, Pt, Ps, Pc, env,
@@ -83,19 +83,36 @@
 # ======================= Section: Transition 转轨路径搜索
    println("+ Section: Transition Search ...")
    @time PerfLog = EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
-      atol = 1E-6, MaxIter = 100,
+      atol = 1E-4, MaxIter = 1000,
       PrintMode = "full", MagicNum = 2.0, StepLen = 0.5, ReturnLog = true )
 
+# ======================= Section: Performance Profile 收敛性能评估
+PyPlot.subplot(1,2,1)
+   PyPlot.plot(PerfLog[:K])
+   PyPlot.title("K")
+PyPlot.subplot(1,2,2)
+   PyPlot.plot(PerfLog[:L])
+   PyPlot.title("L")
 
 
 
-EasyIO.writecsv( "./sandbox/testK.csv", Dt[:K] )
-EasyIO.writecsv( "./sandbox/testL.csv", Dt[:L] )
-EasyIO.writecsv( "./sandbox/testY.csv", Dt[:Y] )
 
-EasyIO.writecsv( "./sandbox/Testk2.csv", Dst[:𝒜] )
 
-EasyIO.writecsv( "./sandbox/testI.csv", Dt[:I] )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
