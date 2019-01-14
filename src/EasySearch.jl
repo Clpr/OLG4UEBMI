@@ -761,6 +761,7 @@ module EasySearch
             return nothing
         end
     end
+# -----------------
 
 
 
@@ -769,11 +770,70 @@ module EasySearch
 
 
 
+# ==============================================================================
+# SECTION 3: Assistant Functions After-Transition-Search 转轨路径搜索后的辅助函数
+# NOTE: in this section, we define some functions used when the search of transition path finished
+#       本节我们定义一些完成转轨路径搜索后使用的辅助函数
+#       these functions are used to do economic analysis
+#       这些函数用于分析具体的经济问题
+#       they compute variables based on a converged/realized transition path
+#       这些函数的计算基于已经求解完的转轨路径，属于对结果的应用
+# --------------
+"""
+    ProcAfterTransition!( t::Int, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple )
+
+Computes variables based on the datasets after the search of transition path;
+returns nothing;
+
+Computes:
+1. Aggregated Utility (Dt[:U], len = T)
+2. GDP Growth Rate % (Dt[:GDPgrowth], len = T-1) [in percentile]
+3. The rate of UEBMI-pool gap to GDP (Dt[:LI2Y], len = T)
+4. The proportion of labor population (Dt[:WorkNRat], len = T)
+5. Substitution Rate of PAYG pension (Dt[:SubstiRat], len = T)
+6. Population (Dt[:N], len = T)
+
+"""
+function ProcAfterTransition!( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple )
+    # 1. Aggregated Utility (Dt[:U], len = T)
+    Dt[:U] = Array{Float64,1}()
+    for t in 1:env.T
+        local tmplongLab = cat( Dst[:Lab][t,1:env.Sr], ones(env.S - env.Sr), dims = 1 )
+        local tmpus = House.u.( Dst[:c][t,1:env.S], tmplongLab, q = Pt[:q][t], alpha = Pc[:α], gamma = Pc[:γ] )
+        push!( Dt[:U], sum(tmpus) )
+    end
+
+    # 2. GDP Growth Rate % (Dt[:GDPgrowth], len = T-1), in percentile
+    # NOTE: Dt[:GDPgrowth][t] = the GDP growth rate in year t (from time t to time t+1)
+    Dt[:GDPgrowth] = Array{Float64,1}()
+    for t in 1:env.T-1
+        push!( Dt[:GDPgrowth], 100 * ( Dt[:Y][t+1] / Dt[:Y][t] - 1.0 ) )
+    end
+
+    # 3. The rate of UEBMI-pool gap to GDP (Dt[:LI2Y], len = T)
+    Dt[:LI2Y] = Dt[:LI] ./ Dt[:Y]
+
+    # 4. The proportion of labor population (Dt[:WorkNRat], len = T)
+    # NOTE: using [:,1] to convert a Array{Float64,2} to Array{Float64,1}
+    Dt[:WorkNRat] = ( sum( Ps[:N][:,1:env.Sr], dims = 2 ) ./ sum( Ps[:N][:,1:env.S], dims = 2 ) )[:,1]
+
+    # 5. Substitution Rate of PAYG Pension (Dt[:SubstiRat], len = T)
+    # NOTE: cross-sectional
+    #       替代率是截面的，即当年退休人的平均养老金给付（Λ_{t}）/当年平均总工资收入（L_{t} * w̄_{t} / N_{t}）
+    Dt[:SubstiRat] = Array{Float64,1}()
+    for t in 1:env.T
+        push!( Dt[:SubstiRat], Dt[:Λ][t] / ( Dt[:L][t] * Dt[:w̄][t] / sum(Ps[:N][t,1:env.Sr]) )   )
+    end
+
+    # 6. Population in year t (Dt[:N], len = T)
+    Dt[:N] = Array{Float64,1}()
+    for t in 1:env.T
+        push!( Dt[:N], sum(Ps[:N][t,1:env.S]) )
+    end
 
 
-
-
-
+    return nothing
+end
 
 
 

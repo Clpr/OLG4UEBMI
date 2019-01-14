@@ -87,14 +87,17 @@
       PrintMode = "full", MagicNum = 2.0, StepLen = 0.5, ReturnLog = true )
 
 # ======================= Section: Performance Profile 收敛性能评估
-PyPlot.subplot(1,2,1)
-   PyPlot.plot(PerfLog[:K])
-   PyPlot.title("K")
-PyPlot.subplot(1,2,2)
-   PyPlot.plot(PerfLog[:L])
-   PyPlot.title("L")
+   EasyPlot.Plot_PerformProfile( PerfLog ; startiter = 50 )
 
+# ======================= Section: Compute Other Economic Indicators/Variables 计算其他经济变量
+   EasySearch.ProcAfterTransition!( Dt, Dst, Pt, Ps, Pc, env )
 
+# ======================= Section: The Visualization of Results 结果可视化
+   EasyPlot.Plot_Transition( Dt, Dst, Pt, Ps, Pc, env,
+      YearRange = ( 2011, 2111 ),  # the range of years to plot
+      LineWidth = 1.0,  # the width of lines to plot
+      outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
+      picsize = (19.2,10.8) )
 
 
 
