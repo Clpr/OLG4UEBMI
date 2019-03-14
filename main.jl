@@ -95,14 +95,34 @@
    EasySearch.ProcAfterTransition!( Dt, Dst, Pt, Ps, Pc, env )
 
 # ======================= Section: The Visualization of Results 结果可视化
-   EasyPlot.Plot_Transition( Dt, Dst, Pt, Ps, Pc, env,
-      YearRange = ( 2000, 2025 ),  # the range of years to plot
+   # 1. a comprehensive summary of the economy
+   # EasyPlot.Plot_Transition( Dt, Dst, Pt, Ps, Pc, env,
+   #    YearRange = ( 2000, 2025 ),  # the range of years to plot
+   #    LineWidth = 1.0,  # the width of lines to plot
+   #    outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
+   #    picsize = (19.2,10.8) )
+   ## ------------------------
+
+   # 2. a panel for calibration (& figures in paper)
+   EasyPlot.Plot_Calibrate( Dt, Dst, Pt, Ps, Pc, env,
+      YearRange = ( 2000, 2050 ),  # the range of years to plot
       LineWidth = 1.0,  # the width of lines to plot
-      outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
-      picsize = (19.2,10.8) )
+      outpdf = string("./output/", "Calibration_", EasyIO.LogTag(), ".pdf" ) , # otuput file
+      picsize = (17.2,5.8) )
+      # DECORATION: add line, the accounted gap/PoolExp from 2010 to 2050
+      tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v2.csv")
+      PyPlot.subplot(1,2,1)
+         PyPlot.plot( tmpDat[2:end,1] , 100.0 .* tmpDat[2:end,4] ./ tmpDat[2:end,2] , "-.r" )
+      PyPlot.legend(["Benchmark Simulation","Accounting Results"])
+      PyPlot.subplot(1,2,2)
+         PyPlot.plot( tmpDat[2:end,1] , 100.0 .* tmpDat[2:end,4] ./ tmpDat[2:end,3] , "-.r" )
+      PyPlot.legend(["Benchmark Simulation","Accounting Results"])
+      # save out
+      PyPlot.savefig( string( "./output/Calib_ForDraft_",EasyIO.LogTag(),".pdf" ), format = "pdf" )
 
 # ======================= Section: Save Model 输出保存模型
    EasyIO.SaveModel( string( "./output/Model_", EasyIO.LogTag(), "/" )  , Dt, Dst, Pt, Ps, Pc, env )
+
 
 
 

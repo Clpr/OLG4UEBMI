@@ -9,12 +9,12 @@
 # parameter (constants)
 Pc = Dict(
     :κ => 0.05,  # depreciation rate 折旧率
-    :μ => 0.10,  # consumption tax rate 消费税率
+    :μ => 0.13,  # value added tax rate 增值税率
     :σ => 0.24,  # income tax rate 工资税率
     :δ => 1/0.99 - 1,  # utility discounting rate 效用折现率，若令效用折现因子为0.99，则对应0.0101010101...
     :α => 1.5,  #　leisure preference than consumption 闲暇对消费的偏好系数
     :γ => 0.5,  # inter-temporal substitution elasticity 跨期替代弹性
-    :𝒯 => 1.0  # Land factor  土地要素
+    # :𝒯 => 1.0  # Land factor  土地要素
 )
 
 # --------------------------------------- A special section to generate technology series 专门章节用于生成技术系数序列
@@ -30,6 +30,7 @@ Pc = Dict(
     for t in 1:env.T
         tmpA[t] /= tmpBenchTech
     end
+    # tmpA .*= 1.0
 
 
 
@@ -61,7 +62,7 @@ Pc = Dict(
     # phase 1: 1945 ~ 2000, keeping 7%
     tmpq[ 1:tmpLoc ] .= 0.07
     # phase 2: 2000 ~ final, growing to 25%
-    tmpq[ tmpLoc:end ] = Array(LinRange( 0.07, 0.25, env.T - tmpLoc + 1 ))
+    tmpq[ tmpLoc:end ] = Array(LinRange( 0.07, 0.20, env.T - tmpLoc + 1 ))
 
 
 
@@ -86,7 +87,7 @@ Pt = Dict(
     :ζ  => fill(0.06,env.T),  # contribution rate: firm -> medical 缴纳（比例）：企业
     :ϕ  => fill(0.02,env.T),  # contribution rate: agent -> medical 缴纳（比例）：个人
     :𝕒  => fill(0.30,env.T),  # transfer rate: firm contribution -> contributor's (working agents) individual account 转移支付（比例）：企业缴纳至缴纳者自己的个人账户的比例
-    :𝕓  => fill(0.00,env.T),  # transfer rate: firm contribution -> retried (cross-sectional in one year) individual account 转移支付（比例）：企业缴纳至当年退休人群个人账户的比例
+    :𝕓  => fill(0.10,env.T),  # transfer rate: firm contribution -> retried (cross-sectional in one year) individual account 转移支付（比例）：企业缴纳至当年退休人群个人账户的比例
     :cpB => fill(0.30,env.T),  # co-payment rate of inpatient expenditure 住院支出的自付比例
     # Household & Demands 家庭部门
 )
@@ -158,10 +159,11 @@ Ps[:p] = ( tmpMA2MB[1] ./ tmpMA2MB[2] )[1:env.S]
     #       in practice, it equals to 40%
     #       统计局数据统计的$q_t$是不含报销部分的expenditure，而我们的$q_{s,t}=m_{s,t} / c_{s,t}$是包含了报销部分的，所以统计局数字需要调整一下。将统计局直接统计出的居民人均医疗支出/总消费的比例记作$\tilde{q}_{t}$（注意，统计局给出的是某一年的平均值。
     #       其实这一版模型里没有${cp}^A_t$，但因为统计局只统计流量数字（不包含医保账户），而门诊支出实际上是以savings支付的，所以在变换时候要考虑。UE-BMI的${cp}^A_t$设定为固定的40%。
-    tmpcpA = 0.4
+    tmpcpA = 1.0
     for t in 1:env.T
         for s in 1:env.S
-            Ps[:q][t,s] = tmpq[t] * ( 1.0 + Ps[:p][s] ) / ( Ps[:p][s] * tmpcpA + Pt[:cpB][t] )
+            Ps[:q][t,s] = tmpq[t] * ( 1.0 + Ps[:p][s] ) / ( Pt[:cpB][t] + Ps[:p][s] * tmpcpA )
+            # Ps[:q][t,s] = tmpq[t]
         end
     end
 

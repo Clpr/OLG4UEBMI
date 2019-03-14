@@ -181,19 +181,61 @@ function Plot_Transition( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env
    return nothing
 end
 # --------------
+"""
+   Plot_Calibrate( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple ;
+      YearRange::Tuple = ( env.START_YEAR, env.START_YEAR + env.T - 1 ),  # the range of years to plot
+      LineWidth::Float64 = 1.0,  # the width of lines to plot
+      outpdf::Union{Nothing,String} = nothing, picsize::Tuple = (12,8) )
+
+plots key indicators in calibration:
+   1. LI/GDP
+   2. LI/pool account expenditure
+   3. LI/pool account incomes
+"""
+function Plot_Calibrate( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple ;
+   YearRange::Tuple = ( env.START_YEAR, env.START_YEAR + env.T - 1 ),  # the range of years to plot
+   LineWidth::Float64 = 1.0,  # the width of lines to plot
+   outpdf::Union{Nothing,String} = nothing, picsize::Tuple = (12,8) )
+   #  ---------------
+   # assertion: years
+   @assert( env.START_YEAR <= YearRange[1] < YearRange[2] < (env.START_YEAR + env.T - 1)  ,  "out of the range of years! Maximum T-1 years" )
+   # prepare the values of X axis
+   local tmpDisplaceYear = 1 - env.START_YEAR  # the shift to convert real years to index
+   local XYEAR = YearRange[1]:YearRange[2]  # the years to plot on x-axis
+   local XLOC = XYEAR .+ tmpDisplaceYear  # the index to slice data
+
+   # prepare the growth rate of LI/Y
+   local LI2Ygrowth = (Dt[:LI2Y][2:env.T] ./ Dt[:LI2Y][1:env.T-1] .- 1.0) .* 100
+
+   # maximum layout
+   local tmpLayout = (1,2)
+   # Plotting
+   PyPlot.figure( figsize = picsize )
+      # PyPlot.subplot(tmpLayout[1],tmpLayout[2], 1)
+      # PyPlot.plot( XYEAR, 100.0 .* Dt[:LI][XLOC] ./ Dt[:Y][XLOC], linewidth = LineWidth )
+      #    PyPlot.xlabel("Year"); PyPlot.grid(true)
+      #    PyPlot.ylabel("LI/Y (%)")
+      # -----
+      PyPlot.subplot(tmpLayout[1],tmpLayout[2], 1)
+      PyPlot.plot( XYEAR, 100.0 .* Dt[:LI][XLOC] ./ Dt[:AggPoolExp][XLOC], linewidth = LineWidth )
+         PyPlot.xlabel("Year"); PyPlot.grid(true)
+         PyPlot.ylabel("Pool Account Gap / Pool Account Expenditure (%)")
+      # ------
+      PyPlot.subplot(tmpLayout[1],tmpLayout[2], 2)
+      PyPlot.plot( XYEAR, 100.0 .* Dt[:LI][XLOC] ./ Dt[:AggPoolIn][XLOC], linewidth = LineWidth )
+         PyPlot.xlabel("Year"); PyPlot.grid(true)
+         PyPlot.ylabel("Pool Account Gap / Pool Account Incomes (%)")
+
+      # tight layout
+      PyPlot.tight_layout()
+
+      # output
+      if isa(outpdf, String)
+      PyPlot.savefig( outpdf, format = "pdf" )
+      end
 
 
-
-
-
-
-
-
-
-
-
-
-
+end  # function ends
 #  -----------
 
 
