@@ -58,6 +58,12 @@ function SaveModel( OutPath::String, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc
         # 1. demography
         writecsv( string(OutPath,"Population.csv"), Ps[:N] )
         writecsv( string(OutPath,"Mortality.csv"), Ps[:F] )
+        # NOTE: save two vectors, total & labor popualtions, to plot
+        writecsv(   string(OutPath,"AggDemography.csv"),
+                    Dict(   "TotalPopu" => Dt[:N],
+                            "LaborPopu" => sum(Ps[:N][:,1:env.Sr],dims=2)[:]  # using [:] to get a one-way vector
+                        )
+                )
         # 2. age-specific
         writecsv( string(OutPath,"Index_Age.csv"), Dst[:Age] )
         writecsv( string(OutPath,"ma2mb.csv"), Ps[:p] )

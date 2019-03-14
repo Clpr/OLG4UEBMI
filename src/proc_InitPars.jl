@@ -20,26 +20,49 @@ Pc = Dict(
 # --------------------------------------- A special section to generate technology series 专门章节用于生成技术系数序列
 # NOTE: because technolgies are piecewise functions of time t
     # 1. first, initialize it as one 初始化
-    tmpA = fill(0.10,env.T)
-    # 2. then, set time points & convert them to index 设置转折点以分割时期
-    tmppt = [1980, 2008, 2018]
-    tmppt = [ x - env.START_YEAR + 1 for x in tmppt ]
-    # 3. modify technology growth path 调整技术
-        # 3.1 part 1: before 1980 (before open & reform) 改革开放前
-        tmpA[1:tmppt[1]] = tmpA[1] .* 1.01 .^ (0:tmppt[1]-1)
-        # 3.2 part 2: 1980 ~ 2008 (before financial crisis) 金融危机前
-        tmpA[tmppt[1]+1:tmppt[2]] = tmpA[tmppt[1]] .* cumprod( 1 .+ LinRange(0.04, 0.045, tmppt[2]-tmppt[1]) )
-        # 3.3 part 3: 2008 ~2018 (recent 10 years) 最近十年
-        tmpA[tmppt[2]+1:tmppt[3]] = tmpA[tmppt[2]] .* cumprod( 1 .+ LinRange(0.05, 0.011, tmppt[3]-tmppt[2]) )
-        # 3.4 part 4: after 2018, grows 50 years 此后再增长50年
-        tmpGrowYear = 50::Int
-        tmpA[tmppt[3]:tmppt[3]+tmpGrowYear] = tmpA[tmppt[3]] .* 1.01 .^ (0:tmpGrowYear)
-        tmpA[tmppt[3]+tmpGrowYear+1:end] = fill(tmpA[tmppt[3]+tmpGrowYear], env.T-tmppt[3]-tmpGrowYear)
+    tmpA = fill(1.0,env.T)
+    # 2. now, we read in the data of TFP & TFP growth rate (profiled from PWT & Jogenson data)
+    tmpTFPgrow = EasyIO.readcsv( env.PATH_TFPGROW )
+    # 3. extract TFP level
+    tmpA = Vector{Float64}(tmpTFPgrow[2:env.T+1,end])  # NOTE: the 1st row is title, the last column is TFP level (not growth)
+    # 3. then, rescale TFP to: TFP = 1 in 2010 (following PWT 9.1)
+    tmpBenchTech = tmpA[ 1980 - env.START_YEAR + 1 ]
+    for t in 1:env.T
+        tmpA[t] /= tmpBenchTech
+    end
+
+
+
+    # tmpA .*= 0.1  # rescale TFP
+    # ----------
+    # # 2. then, set time points & convert them to index 设置转折点以分割时期
+    # tmppt = [1980, 2008, 2018]
+    # tmppt = [ x - env.START_YEAR + 1 for x in tmppt ]
+    # # 3. modify technology growth path 调整技术
+    #     # 3.1 part 1: before 1980 (before open & reform) 改革开放前
+    #     tmpA[1:tmppt[1]] = tmpA[1] .* 1.01 .^ (0:tmppt[1]-1)
+    #     # 3.2 part 2: 1980 ~ 2008 (before financial crisis) 金融危机前
+    #     tmpA[tmppt[1]+1:tmppt[2]] = tmpA[tmppt[1]] .* cumprod( 1 .+ LinRange(0.04, 0.045, tmppt[2]-tmppt[1]) )
+    #     # 3.3 part 3: 2008 ~2018 (recent 10 years) 最近十年
+    #     tmpA[tmppt[2]+1:tmppt[3]] = tmpA[tmppt[2]] .* cumprod( 1 .+ LinRange(0.05, 0.011, tmppt[3]-tmppt[2]) )
+    #     # 3.4 part 4: after 2018, grows 50 years 此后再增长50年
+    #     tmpGrowYear = 50::Int
+    #     tmpA[tmppt[3]:tmppt[3]+tmpGrowYear] = tmpA[tmppt[3]] .* 1.01 .^ (0:tmpGrowYear)
+    #     tmpA[tmppt[3]+tmpGrowYear+1:end] = fill(tmpA[tmppt[3]+tmpGrowYear], env.T-tmppt[3]-tmpGrowYear)
 
 
 # --------------------------------------- A special section to generate m/c coefficient 用于生成医疗/消费比例
 # NOTE: allows to read in external data file, using env.M2C
-    tmpq = Array(LinRange( 0.07, 0.25, env.T ))
+    # tmpq = Array(LinRange( 0.07, 0.25, env.T ))
+    tmpq = zeros( Float64, env.T )
+    tmpLoc = 2000 - env.START_YEAR + 1
+    # phase 1: 1945 ~ 2000, keeping 7%
+    tmpq[ 1:tmpLoc ] .= 0.07
+    # phase 2: 2000 ~ final, growing to 25%
+    tmpq[ tmpLoc:end ] = Array(LinRange( 0.07, 0.25, env.T - tmpLoc + 1 ))
+
+
+
 
 
 

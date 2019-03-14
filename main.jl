@@ -12,6 +12,7 @@
       # import Dates  # for log 日志用日期模块
    # 3. import 3rd-party public libraries 导入第三方公开库&函数
       import DataFrames, CSV  # for data I/O 数据读写用
+      # import ExcelReaders  # read in excel files 数据读写用
       # import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
       import EasyIO  # masked I/O methods 数据I/O
@@ -32,7 +33,8 @@
       PATH_DEMOGCSV = "./data/Demography_base.csv",  # 人口数据 csv matrix file (year × age, no headers or row-indexes) of population
       PATH_WAGEPROFILE = "./data/WageProfileCoef.csv", # 工资曲线数据路径 csv column vector (age × 1, no header or row-indexes) of relative wage profiling coefficients
       PATH_MA2MB = "./data/MA2MBCoef.csv", # 门诊/住院费用数据路径 csv column vector (age × 1, no header or row-indexes) of MA/MB for each generation
-      PATH_M2C = "./data/M2C.csv"  # 总医疗支出/消费比例路径 csv column vector (age × 1, no header or row-indexes) of m/c in each year
+      PATH_M2C = "./data/M2C.csv",  # 总医疗支出/消费比例路径 csv column vector (age × 1, no header or row-indexes) of m/c in each year
+      PATH_TFPGROW = "./data/tfpGrowthProfile.csv",  # TFP增长率数据 the growth of TFP
    )
 
 
@@ -94,7 +96,7 @@
 
 # ======================= Section: The Visualization of Results 结果可视化
    EasyPlot.Plot_Transition( Dt, Dst, Pt, Ps, Pc, env,
-      YearRange = ( 2011, 2111 ),  # the range of years to plot
+      YearRange = ( 2000, 2025 ),  # the range of years to plot
       LineWidth = 1.0,  # the width of lines to plot
       outpdf = string("./output/", "Transition_", EasyIO.LogTag(), ".pdf" ) , # otuput file
       picsize = (19.2,10.8) )
