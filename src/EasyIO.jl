@@ -61,7 +61,8 @@ function SaveModel( OutPath::String, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc
         # NOTE: save two vectors, total & labor popualtions, to plot
         writecsv(   string(OutPath,"AggDemography.csv"),
                     Dict(   "TotalPopu" => Dt[:N],
-                            "LaborPopu" => sum(Ps[:N][:,1:env.Sr],dims=2)[:]  # using [:] to get a one-way vector
+                            "LaborPopu" => sum(Ps[:N][:,1:env.Sr],dims=2)[:],  # using [:] to get a one-way vector
+                            "AgingPopu_65plus" => sum(Ps[:N][:, (65 - env.START_AGE + 1):env.S],dims=2)[:]
                         )
                 )
         # 2. age-specific
