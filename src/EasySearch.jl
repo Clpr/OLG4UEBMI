@@ -830,6 +830,24 @@ function ProcAfterTransition!( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict
         push!( Dt[:N], sum(Ps[:N][t,1:env.S]) )
     end
 
+    # 7. (Social) aggregated outpatient expenditure & inpatient expenditure
+    Dt[:AggMA] = Array{Float64,1}()
+    Dt[:AggMB] = Array{Float64,1}()
+    for t in 1:env.T
+        push!( Dt[:AggMA], sum( Ps[:N][t,1:env.S] .* Dst[:MA][t,1:env.S] ) )
+        push!( Dt[:AggMB], sum( Ps[:N][t,1:env.S] .* Dst[:MB][t,1:env.S] ) )
+    end
+
+    # 8. Aggregated Income & Expenditure of the pooling account of UE-BMI
+    Dt[:AggPoolExp] = Array{Float64,1}()
+    Dt[:AggPoolIn] = Array{Float64,1}()
+    for t in 1:env.T
+        push!( Dt[:AggPoolExp], Dt[:AggMB][t] * ( 1.0 - Pt[:cpB][t] ) )
+        push!( Dt[:AggPoolIn], Dt[:AggPoolExp][t] - Dt[:LI][t] )
+    end
+
+
+
 
     return nothing
 end

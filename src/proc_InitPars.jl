@@ -26,7 +26,7 @@ Pc = Dict(
     # 3. extract TFP level
     tmpA = Vector{Float64}(tmpTFPgrow[2:env.T+1,end])  # NOTE: the 1st row is title, the last column is TFP level (not growth)
     # 3. then, rescale TFP to: TFP = 1 in 2010 (following PWT 9.1)
-    tmpBenchTech = tmpA[ 1980 - env.START_YEAR + 1 ]
+    tmpBenchTech = tmpA[ 2010 - env.START_YEAR + 1 ]
     for t in 1:env.T
         tmpA[t] /= tmpBenchTech
     end
