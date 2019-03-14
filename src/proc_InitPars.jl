@@ -52,7 +52,9 @@ Pc = Dict(
 
 
 # --------------------------------------- A special section to generate m/c coefficient 用于生成医疗/消费比例
+# NOTE: based on CNBS data (China National Bureau of Statistics)
 # NOTE: allows to read in external data file, using env.M2C
+# NOTE: tmpq::Vector will then be profiled to $q_{s,t}$ (age-related) and saved in Ps::{Dict}
     # tmpq = Array(LinRange( 0.07, 0.25, env.T ))
     tmpq = zeros( Float64, env.T )
     tmpLoc = 2000 - env.START_YEAR + 1
@@ -60,9 +62,6 @@ Pc = Dict(
     tmpq[ 1:tmpLoc ] .= 0.07
     # phase 2: 2000 ~ final, growing to 25%
     tmpq[ tmpLoc:end ] = Array(LinRange( 0.07, 0.25, env.T - tmpLoc + 1 ))
-
-
-
 
 
 
@@ -90,7 +89,6 @@ Pt = Dict(
     :𝕓  => fill(0.00,env.T),  # transfer rate: firm contribution -> retried (cross-sectional in one year) individual account 转移支付（比例）：企业缴纳至当年退休人群个人账户的比例
     :cpB => fill(0.30,env.T),  # co-payment rate of inpatient expenditure 住院支出的自付比例
     # Household & Demands 家庭部门
-    :q  => tmpq,  # ratio of total medical expenditure to total consumption 总医疗支出/消费比例系数
 )
 
 
@@ -110,7 +108,7 @@ Ps[:ε] = Array{Float64}( tmpε[1:env.Sr] )  # add to Ps
 
 # 3. MA2MB ratio (outpatient expenditure / inpatient expenditure) 门诊/住院费用比例
 tmpMA2MB = CSV.read(env.PATH_MA2MB)
-Ps[:p] = tmpMA2MB[1] ./ tmpMA2MB[2]
+Ps[:p] = ( tmpMA2MB[1] ./ tmpMA2MB[2] )[1:env.S]
 
 # 4. Demography 人口结构
 # NOTE: provided data are from real age 0 to real age 100 (similar to life table)
@@ -148,6 +146,24 @@ Ps[:p] = tmpMA2MB[1] ./ tmpMA2MB[2]
     Ps[:F] = tmpF
 
 
+
+# 5. (adjusted) q_{s,t}, from \tilde{q}_{t} by CNBS
+# ratio of total medical expenditure to total consumption 总医疗支出/消费比例系数
+    Ps[:q] = zeros( env.T, env.S )
+    # NOTE: depends on p_s, cpB_t etc.
+    # $\frac{p_s {cp}^A_t + {cp}^B_t}{1+p_s} q_{s,t} = \tilde{q}_t$
+    # NOTE: CNBS only collect real (without insurance benefits) expenditure,
+    #       and it does not count for the individual account of UEBMI (savings)
+    #       therefore, we consider ${cp}^A_t$ here.
+    #       in practice, it equals to 40%
+    #       统计局数据统计的$q_t$是不含报销部分的expenditure，而我们的$q_{s,t}=m_{s,t} / c_{s,t}$是包含了报销部分的，所以统计局数字需要调整一下。将统计局直接统计出的居民人均医疗支出/总消费的比例记作$\tilde{q}_{t}$（注意，统计局给出的是某一年的平均值。
+    #       其实这一版模型里没有${cp}^A_t$，但因为统计局只统计流量数字（不包含医保账户），而门诊支出实际上是以savings支付的，所以在变换时候要考虑。UE-BMI的${cp}^A_t$设定为固定的40%。
+    tmpcpA = 0.4
+    for t in 1:env.T
+        for s in 1:env.S
+            Ps[:q][t,s] = tmpq[t] * ( 1.0 + Ps[:p][s] ) / ( Ps[:p][s] * tmpcpA + Pt[:cpB][t] )
+        end
+    end
 
 
 

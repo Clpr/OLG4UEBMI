@@ -189,7 +189,9 @@ function lev0Abbr( OriginData::Dict{Symbol,T} where T )
 
     # E: multipliers on consumptionm including the benefits of UEBMI and consumption taxation
     # NOTE: len = S
-    DictPar[:E] = 1.0 .+ OriginData[:μ][1:ConstPar.S] .- OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] )
+            # DictPar[:E] = 1.0 .+ OriginData[:μ][1:ConstPar.S] .- OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] )
+    # NOTE: bug fixed on Mar 14,2019
+    DictPar[:E] = ( 1.0 .+ OriginData[:μ][1:ConstPar.S] ) .* ( 1.0 .+ OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] ) )
     @assert( all( DictPar[:E] .> 0.0 ), "component E: >0 required" )
 
     # F: extra isolated capital flows, the benefits of pension and the transfer payments of UEBMI
@@ -260,7 +262,9 @@ function lev0Abbr_Retired( OriginData::Dict{Symbol,T} where T )
 
     # E: multipliers on consumptionm including the benefits of UEBMI and consumption taxation
     # NOTE: len = S
-    DictPar[:E] = 1.0 .+ OriginData[:μ][1:ConstPar.S] .- OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] )
+            # DictPar[:E] = 1.0 .+ OriginData[:μ][1:ConstPar.S] .- OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] )
+    # NOTE: bug fixed on Mar 14,2019
+    DictPar[:E] = ( 1.0 .+ OriginData[:μ][1:ConstPar.S] ) .* ( 1.0 .+ OriginData[:q][1:ConstPar.S] .* ( 1.0 .- OriginData[:cpB][1:ConstPar.S] ) ./ ( 1.0 .+ OriginData[:p][1:ConstPar.S] ) )
     @assert( all( DictPar[:E] .> 0.0 ), "component E: >0 required" )
 
     # F: extra isolated capital flows, the benefits of pension and the transfer payments of UEBMI

@@ -99,10 +99,12 @@ module EasySearch
             # --------- Vectors
                 # -------- len = S
             OriginData[:Survival] = 1.0 .- Ps[:F][t,1:S] # Survival probs
-            OriginData[:q] = fill(Pt[:q][t],S) # m2c ratio, the ratio of health expenditure on consumption
             OriginData[:r] = fill(Dt[:r][t],S) # interest rates
             OriginData[:cpB] = fill(Pt[:cpB][t],S) # co-payment rate of inpatient expenditure
             OriginData[:p] = Ps[:p][1:S] # MA/MB ratio
+                # OriginData[:q] = fill(Pt[:q][t],S) # m2c ratio, the ratio of health expenditure on consumption
+            # NOTE: bug fixed, q_t has been upgraded to q_{s,t} which is saved in Ps::Dict rather than Pt::Dict
+            OriginData[:q] = Ps[:q][t,1:S]
                 # -------- len = Sr
             OriginData[:w] = Dst[:w][t,1:Sr] # wage level
             OriginData[:z] = fill(Pt[:z][t],Sr) # collection rate of pension
@@ -145,10 +147,13 @@ module EasySearch
             # --------- Vectors
                 # -------- len = S
                 OriginData[:Survival] = 1.0 .- diagr(Ps[:F], offset = env.S - S , LEN = S)  # please refer to the notes of this CASE
-            OriginData[:q] = vecExpand(Pt[:q][t:end], S) # m2c ratio
+                    # NOTE: bug fixed, Mar 14, 2019; see below
+                    # OriginData[:q] = vecExpand(Pt[:q][t:end], S) # m2c ratio
             OriginData[:r] = vecExpand(Dt[:r][t:end], S) # interest rates
             OriginData[:cpB] = vecExpand(Pt[:cpB][t:end], S) # co-payment rate of inpatient expenditure
                 OriginData[:p] = Ps[:p][env.S-S+1:env.S] # NOTE: s -> real maximum age
+                # NOTE: bug fixed, q_t has been upgraded to q_{s,t} which is saved in Ps::Dict rather than Pt::Dict
+                OriginData[:q] = diagr(Ps[:q], offset = env.S - S, LEN = S)
                 # -------- len = Sr
                 OriginData[:w] = diagr(Dst[:w], offset = env.S - S, LEN = Sr) # wage, (sliced)
             OriginData[:z] = vecExpand(Pt[:z][t:end], Sr) # collection rate of pension
@@ -181,7 +186,10 @@ module EasySearch
             # --------- Vectors
                 # -------- len = S
                 OriginData[:Survival] = 1.0 .- diagr(Ps[:F], offset = env.S - S , LEN = S)  # please refer to the notes of this CASE
-            OriginData[:q] = vecExpand(Pt[:q][t:end], S)
+                    # NOTE: bug fixed, Mar 14, 2019; see below
+                    # OriginData[:q] = vecExpand(Pt[:q][t:end], S)
+                # NOTE: bug fixed, q_t has been upgraded to q_{s,t} which is saved in Ps::Dict rather than Pt::Dict
+                OriginData[:q] = diagr(Ps[:q], offset = env.S - S, LEN = S)
             OriginData[:r] = vecExpand(Dt[:r][t:end], S)
             OriginData[:cpB] = vecExpand(Pt[:cpB][t:end], S)
                 OriginData[:p] = Ps[:p][env.S-S+1:env.S] # NOTE: s -> real maximum age
@@ -217,7 +225,9 @@ module EasySearch
             # --------- Vectors
                 # -------- len = S
                 OriginData[:Survival] = 1.0 .- diagr(Ps[:F], offset = 1 - t, LEN = S)
-            OriginData[:q] = vecExpand(Pt[:q][t:end], S) # m2c ratio
+                    # NOTE: bug fixed, Mar 14, 2019; see below
+                    # OriginData[:q] = vecExpand(Pt[:q][t:end], S) # m2c ratio
+                OriginData[:q] = diagr(Ps[:q], offset = 1 - t, LEN = S)
             OriginData[:r] = vecExpand(Dt[:r][t:end], S) # interest rates
             OriginData[:cpB] = vecExpand(Pt[:cpB][t:end], S) # co-payment rate of inpatient expenditure
                 OriginData[:p] = Ps[:p][env.S-S+1:env.S] # NOTE: s -> real maximum age
@@ -796,9 +806,12 @@ Computes:
 function ProcAfterTransition!( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple )
     # 1. Aggregated Utility (Dt[:U], len = T)
     Dt[:U] = Array{Float64,1}()
+    local tmpus = zeros( env.S )  # temp utility vector for a year (populi cruxes)
     for t in 1:env.T
         local tmplongLab = cat( Dst[:Lab][t,1:env.Sr], ones(env.S - env.Sr), dims = 1 )
-        local tmpus = House.u.( Dst[:c][t,1:env.S], tmplongLab, q = Pt[:q][t], alpha = Pc[:α], gamma = Pc[:γ] )
+        for s in 1:env.S
+            tmpus[s] = House.u( Dst[:c][t,s], tmplongLab[s], q = Ps[:q][t,s], alpha = Pc[:α], gamma = Pc[:γ] )
+        end
         push!( Dt[:U], sum(tmpus) )
     end
 

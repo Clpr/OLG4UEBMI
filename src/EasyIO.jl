@@ -68,6 +68,7 @@ function SaveModel( OutPath::String, Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc
         writecsv( string(OutPath,"Index_Age.csv"), Dst[:Age] )
         writecsv( string(OutPath,"ma2mb.csv"), Ps[:p] )
         writecsv( string(OutPath,"WageProfile.csv"), Ps[:ε] )
+        writecsv( string(OutPath,"ProfiledQ_m2c.csv"), Ps[:q] )
         # 3. constants
         writecsv( string(OutPath,"ConstParameters.csv"), Pc )
         # 4. year-related parameters
