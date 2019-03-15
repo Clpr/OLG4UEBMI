@@ -13,7 +13,7 @@
    # 3. import 3rd-party public libraries 导入第三方公开库&函数
       import DataFrames, CSV  # for data I/O 数据读写用
       # import ExcelReaders  # read in excel files 数据读写用
-      # import PyPlot  # for plotting 绘图用
+      import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
       import EasyIO  # masked I/O methods 数据I/O
       import EasySearch # Search algorithms, for both Steady States & Transition paths 稳态&转轨搜索

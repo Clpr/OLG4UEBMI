@@ -93,6 +93,14 @@ Pt = Dict(
 )
 
 
+# -------------------------------------
+# APPENDIX: adjust UE-BMI policy pars to simulate canceling UE-BMI individual accounts
+# NOTE: for benchmark & other policy simulations, just comment this section
+Pt[:ϕ] .= 0.0
+Pt[:𝕒] .= 0.0
+Pt[:ζ] .= ( 1.0 .+ Pt[:z] .* Pt[:η] .+ Pt[:ζ] ) ./ ( 1.0 .+ Pt[:ϕ] ) .- 1.0 .- Pt[:z] .* Pt[:η]
+
+
 
 
 # --------------------------------------- Read-in Data 读入数据
