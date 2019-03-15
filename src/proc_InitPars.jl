@@ -95,10 +95,12 @@ Pt = Dict(
 
 # -------------------------------------
 # APPENDIX: adjust UE-BMI policy pars to simulate canceling UE-BMI individual accounts
+# NOTE: we cancel the individual accounts since 2020
 # NOTE: for benchmark & other policy simulations, just comment this section
-Pt[:ϕ] .= 0.0
-Pt[:𝕒] .= 0.0
-Pt[:ζ] .= ( 1.0 .+ Pt[:z] .* Pt[:η] .+ Pt[:ζ] ) ./ ( 1.0 .+ Pt[:ϕ] ) .- 1.0 .- Pt[:z] .* Pt[:η]
+# tmpLoc = 2020 - env.START_YEAR + 1
+# Pt[:ϕ][ tmpLoc:end ] .= 0.0
+# Pt[:𝕒][ tmpLoc:end ] .= 0.0
+# Pt[:ζ][ tmpLoc:end ] .= ( 1.0 .+ Pt[:z][ tmpLoc:end ] .* Pt[:η][ tmpLoc:end ] .+ Pt[:ζ][ tmpLoc:end ] ) ./ ( 1.0 .+ Pt[:ϕ][ tmpLoc:end ] ) .- 1.0 .- Pt[:z][ tmpLoc:end ] .* Pt[:η][ tmpLoc:end ]
 
 
 
