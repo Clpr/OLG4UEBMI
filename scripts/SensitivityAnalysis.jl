@@ -146,7 +146,7 @@ PyPlot.figure( figsize = [16,9] )  # figsize measured in inches
       PyPlot.plot( 100 .* SA_RelTurb, 100 .* SA_ResSet_LI2Exp[:σ] ./SA_ResSet_LI2Exp[:σ][3], "--s" )
       PyPlot.xlabel("Parameter (% change from benchmark)")
       PyPlot.ylabel("Relative change from benchmark (%)")
-      PyPlot.title("Pool gap / Pool expenditure")
+      PyPlot.title("Rise from 2010 to 2110: Pool gap / Pool expenditure")
       PyPlot.grid(true)
       PyPlot.legend(SA_ParCandidate)
    # --------------------------
@@ -159,7 +159,7 @@ PyPlot.figure( figsize = [16,9] )  # figsize measured in inches
       PyPlot.plot( 100 .* SA_RelTurb, 100 .* SA_ResSet_LI2Inc[:σ] ./SA_ResSet_LI2Inc[:σ][3], "--s" )
       PyPlot.xlabel("Parameter (% change from benchmark)")
       PyPlot.ylabel("Relative change from benchmark (%)")
-      PyPlot.title("Pool gap / Pool incomes")
+      PyPlot.title("Rise from 2010 to 2110: Pool gap / Pool incomes")
       PyPlot.grid(true)
       PyPlot.legend(SA_ParCandidate)
    # --------------------------
@@ -172,7 +172,7 @@ PyPlot.figure( figsize = [16,9] )  # figsize measured in inches
       PyPlot.plot( 100 .* SA_RelTurb, 100 .* SA_ResSet_LI2GDP[:σ] ./SA_ResSet_LI2GDP[:σ][3], "--s" )
       PyPlot.xlabel("Parameter (% change from benchmark)")
       PyPlot.ylabel("Relative change from benchmark (%)")
-      PyPlot.title("Pool gap / GDP")
+      PyPlot.title("Rise from 2010 to 2110: Pool gap / GDP")
       PyPlot.grid(true)
       PyPlot.legend(SA_ParCandidate)
    # --------------------------
@@ -185,7 +185,7 @@ PyPlot.figure( figsize = [16,9] )  # figsize measured in inches
       PyPlot.plot( 100 .* SA_RelTurb, 100 .* SA_ResSet_LI2Tax[:σ] ./SA_ResSet_LI2Tax[:σ][3], "--s" )
       PyPlot.xlabel("Parameter (% change from benchmark)")
       PyPlot.ylabel("Relative change from benchmark (%)")
-      PyPlot.title("Pool gap / Tax revenues")
+      PyPlot.title("Rise from 2010 to 2110: Pool gap / Tax revenues")
       PyPlot.grid(true)
       PyPlot.legend(SA_ParCandidate)
    # --------------------------
