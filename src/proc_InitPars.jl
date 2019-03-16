@@ -58,11 +58,15 @@ Pc = Dict(
 # NOTE: tmpq::Vector will then be profiled to $q_{s,t}$ (age-related) and saved in Ps::{Dict}
     # tmpq = Array(LinRange( 0.07, 0.25, env.T ))
     tmpq = zeros( Float64, env.T )
+    # phase 1: 1945 ~ 2000, grows to 7%
     tmpLoc = 2000 - env.START_YEAR + 1
-    # phase 1: 1945 ~ 2000, keeping 7%
-    tmpq[ 1:tmpLoc ] .= 0.07
-    # phase 2: 2000 ~ final, growing to 25%
-    tmpq[ tmpLoc:end ] = Array(LinRange( 0.07, 0.20, env.T - tmpLoc + 1 ))
+    tmpq[ 1:tmpLoc ] .= Array(LinRange( 0.07,0.07, tmpLoc ))
+    # phase 2: 2000 ~ 2010, 7%  (latest data published in Jan 2019 is 8.4% in 2018)
+    tmpLoc2 = 2010 - env.START_YEAR + 1
+    tmpq[ tmpLoc:tmpLoc2 ] .= Array(LinRange( 0.07,0.07, tmpLoc2-tmpLoc+1 ))
+    # phase 3: 2010 ~ 2344, growing to 20%
+    tmpLoc = 2344 - env.START_YEAR + 1
+    tmpq[ tmpLoc2:tmpLoc ] = Array(LinRange( 0.07, 0.20, tmpLoc - tmpLoc2 + 1 ))
 
 
 
@@ -163,17 +167,18 @@ Ps[:p] = ( tmpMA2MB[1] ./ tmpMA2MB[2] )[1:env.S]
     Ps[:q] = zeros( env.T, env.S )
     # NOTE: depends on p_s, cpB_t etc.
     # $\frac{p_s {cp}^A_t + {cp}^B_t}{1+p_s} q_{s,t} = \tilde{q}_t$
-    # NOTE: CNBS only collect real (without insurance benefits) expenditure,
+    # NOTE: surveys (if you use another data source to profile q_{s,t} but not CNBS) may only collect real (without insurance benefits) expenditure,
     #       and it does not count for the individual account of UEBMI (savings)
     #       therefore, we consider ${cp}^A_t$ here.
-    #       in practice, it equals to 40%
-    #       统计局数据统计的$q_t$是不含报销部分的expenditure，而我们的$q_{s,t}=m_{s,t} / c_{s,t}$是包含了报销部分的，所以统计局数字需要调整一下。将统计局直接统计出的居民人均医疗支出/总消费的比例记作$\tilde{q}_{t}$（注意，统计局给出的是某一年的平均值。
-    #       其实这一版模型里没有${cp}^A_t$，但因为统计局只统计流量数字（不包含医保账户），而门诊支出实际上是以savings支付的，所以在变换时候要考虑。UE-BMI的${cp}^A_t$设定为固定的40%。
+    #       in practice, it equals to 40% (about)
+    #       有些调查数据统计的$q_t$是不含报销部分的expenditure，而我们的$q_{s,t}=m_{s,t} / c_{s,t}$是包含了报销部分的，所以数字需要调整一下。将直接统计出的居民人均医疗支出/总消费的比例记作$\tilde{q}_{t}$（注意，统计局给出的是某一年的平均值。
+    #       其实这一版模型里没有${cp}^A_t$，但考虑到调查或许只统计流量数字（不包含医保账户），而门诊支出实际上是以savings支付的，所以在变换时候要考虑。UE-BMI的${cp}^A_t$设定为固定的40%。
+    # NOTE: if you use CNBS data, no warry about this problem (it considers the covered part)
     tmpcpA = 1.0
     for t in 1:env.T
         for s in 1:env.S
-            Ps[:q][t,s] = tmpq[t] * ( 1.0 + Ps[:p][s] ) / ( Pt[:cpB][t] + Ps[:p][s] * tmpcpA )
-            # Ps[:q][t,s] = tmpq[t]
+            Ps[:q][t,s] = tmpq[t] * ( 1.0 + Ps[:p][s] ) / ( Pt[:cpB][t] + Ps[:p][s] * tmpcpA )  # adjustment case
+            # Ps[:q][t,s] = tmpq[t]  # un-adjustment case (CNBS data)
         end
     end
 

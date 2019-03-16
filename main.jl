@@ -105,7 +105,7 @@
 
    # 2. a panel for calibration (& figures in paper)
    EasyPlot.Plot_Calibrate( Dt, Dst, Pt, Ps, Pc, env,
-      YearRange = ( 2000, 2050 ),  # the range of years to plot
+      YearRange = ( 2010, 2050 ),  # the range of years to plot
       LineWidth = 1.0,  # the width of lines to plot
       outpdf = string("./output/", "Calibration_", EasyIO.LogTag(), ".pdf" ) , # otuput file
       picsize = (17.2,5.8) )
