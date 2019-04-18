@@ -64,9 +64,11 @@ Pc = Dict(
     # phase 2: 2000 ~ 2010, 7%  (latest data published in Jan 2019 is 8.4% in 2018)
     tmpLoc2 = 2010 - env.START_YEAR + 1
     tmpq[ tmpLoc:tmpLoc2 ] .= Array(LinRange( 0.07,0.07, tmpLoc2-tmpLoc+1 ))
-    # phase 3: 2010 ~ 2344, growing to 20%
-    tmpLoc = 2344 - env.START_YEAR + 1
-    tmpq[ tmpLoc2:tmpLoc ] = Array(LinRange( 0.07, 0.20, tmpLoc - tmpLoc2 + 1 ))
+    # phase 3: 2010 ~ 2057, growing to 14% (2057 is the year when aging population / total population peaked)
+    tmpLoc = 2057 - env.START_YEAR + 1
+    tmpq[ tmpLoc2:tmpLoc ] = Array(LinRange( 0.07, 0.08, tmpLoc - tmpLoc2 + 1 ))
+    # phase 4: 2057 ~ 2344, keep constant
+    tmpq[ tmpLoc:end ] .= tmpq[ tmpLoc ]
 
 
 

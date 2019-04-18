@@ -4,22 +4,22 @@
 
 
 
-# ============================================
-# SECTION: define a macro to solve a model 定义一个求解一遍模型的macro()
-macro quickproc_SolveModel()
-    # NOTE: PrintMode in ["full", "concise", "final", "silent"]
-       Guess = ( r = 0.08, L = 0.2 )
-       @time EasySearch.SteadyState!( 1, Guess, Dt, Dst, Pt, Ps, Pc, env,
-          atol = 1E-8, MaxIter = 1000, PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
-       Guess = ( r = 0.12, L = 0.75 )
-       @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
-          atol = 1E-6, MaxIter = 1000,
-          PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
-       @time PerfLog = EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
-          atol = 1E-3, MaxIter = 500,
-          PrintMode = "full", MagicNum = 2.0, StepLen = 0.7, ReturnLog = true )
-       EasySearch.ProcAfterTransition!( Dt, Dst, Pt, Ps, Pc, env )  # compute other variables
-end # end macro
+# # ============================================
+# # SECTION: define a macro to solve a model 定义一个求解一遍模型的macro()
+# macro quickproc_SolveModel()
+#     # NOTE: PrintMode in ["full", "concise", "final", "silent"]
+#        Guess = ( r = 0.08, L = 0.2 )
+#        @time EasySearch.SteadyState!( 1, Guess, Dt, Dst, Pt, Ps, Pc, env,
+#           atol = 1E-8, MaxIter = 1000, PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
+#        Guess = ( r = 0.12, L = 0.75 )
+#        @time EasySearch.SteadyState!( env.T, Guess, Dt, Dst, Pt, Ps, Pc, env,
+#           atol = 1E-6, MaxIter = 1000,
+#           PrintMode = "final", MagicNum = 2.0, StepLen = 0.5 )
+#        @time PerfLog = EasySearch.Transition!( Dt, Dst, Pt, Ps, Pc, env,
+#           atol = 1E-3, MaxIter = 500,
+#           PrintMode = "full", MagicNum = 2.0, StepLen = 0.7, ReturnLog = true )
+#        EasySearch.ProcAfterTransition!( Dt, Dst, Pt, Ps, Pc, env )  # compute other variables
+# end # end macro
 
 
 
