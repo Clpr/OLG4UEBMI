@@ -9,11 +9,8 @@
       push!(LOAD_PATH,"./src/")  # source files directory 源文件目录
    # 2. import standard libraries & functions 导入标准库&函数
       import Statistics: mean  # standard aggregating functions 基本汇总用函数
-      # import Dates  # for log 日志用日期模块
    # 3. import 3rd-party public libraries 导入第三方公开库&函数
       import DataFrames, CSV  # for data I/O 数据读写用
-      # import ExcelReaders  # read in excel files 数据读写用
-      # import PyPlot  # for plotting 绘图用
    # 4. import custom modules 导入自制模块
       import EasyIO  # masked I/O methods 数据I/O
       import EasySearch # Search algorithms, for both Steady States & Transition paths 稳态&转轨搜索
@@ -104,27 +101,27 @@
    ## ------------------------
 
    # 2. a panel for calibration (& figures in paper)
-   EasyPlot.Plot_Calibrate( Dt, Dst, Pt, Ps, Pc, env,
-      YearRange = ( 2010, 2050 ),  # the range of years to plot
-      LineWidth = 1.0,  # the width of lines to plot
-      # outpdf = string("./output/", "Calibration_", EasyIO.LogTag(), ".pdf" ) , # otuput file
-      outpdf = nothing,
-      picsize = (17.2,5.8) )
-      # DECORATION: add line, the accounted gap/PoolExp from 2010 to 2050
-      # tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v2.csv")
-      tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v3_190403.csv")
-      tmpEndTime = 40 + 2
-      PyPlot.subplot(1,2,1)
-         PyPlot.plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,2] , "-.r" )
-      PyPlot.legend(["Benchmark Simulation","Accounting Results"])
-      PyPlot.subplot(1,2,2)
-         PyPlot.plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,3] , "-.r" )
-      PyPlot.legend(["Benchmark Simulation","Accounting Results"])
-      # save out
-      PyPlot.savefig( string( "./output/Calib_ForDraft_",EasyIO.LogTag(),".pdf" ), format = "pdf" )
-
-# ======================= Section: Save Model 输出保存模型
-   EasyIO.SaveModel( string( "./output/Model_", EasyIO.LogTag(), "/" )  , Dt, Dst, Pt, Ps, Pc, env )
+#    EasyPlot.Plot_Calibrate( Dt, Dst, Pt, Ps, Pc, env,
+#       YearRange = ( 2010, 2050 ),  # the range of years to plot
+#       LineWidth = 1.0,  # the width of lines to plot
+#       # outpdf = string("./output/", "Calibration_", EasyIO.LogTag(), ".pdf" ) , # otuput file
+#       outpdf = nothing,
+#       picsize = (17.2,5.8) )
+#       # DECORATION: add line, the accounted gap/PoolExp from 2010 to 2050
+#       # tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v2.csv")
+#       tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v3_190403.csv")
+#       tmpEndTime = 40 + 2
+#       PyPlot.subplot(1,2,1)
+#          PyPlot.plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,2] , "-.r" )
+#       PyPlot.legend(["Benchmark Simulation","Accounting Results"])
+#       PyPlot.subplot(1,2,2)
+#          PyPlot.plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,3] , "-.r" )
+#       PyPlot.legend(["Benchmark Simulation","Accounting Results"])
+#       # save out
+#       PyPlot.savefig( string( "./output/Calib_ForDraft_",EasyIO.LogTag(),".pdf" ), format = "pdf" )
+#
+# # ======================= Section: Save Model 输出保存模型
+#    EasyIO.SaveModel( string( "./output/Model_", EasyIO.LogTag(), "/" )  , Dt, Dst, Pt, Ps, Pc, env )
 
 
 

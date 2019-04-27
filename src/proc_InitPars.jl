@@ -86,7 +86,7 @@ Pt = Dict(
     # General Fiscal 一般财政
     :D2Ycap => fill(0.0,env.T),  # upper bound of gov outsanding debt to GDP 未偿债务上限
     # Urban Pension 城镇养老金计划
-    :z  => fill(0.85,env.T),  # collection rates 收缴率
+    :z  => fill(0.85,env.T),  # collection rates of pension 养老金收缴率
     :η  => fill(0.2,env.T),  # contribution rate: firm -> pension 缴纳（比例）：企业
     :θ  => fill(0.08,env.T),  # contribution rate: agent -> pension 缴纳（比例）：个人
     # Urban Medical Scheme 城镇医保计划
@@ -183,6 +183,52 @@ Ps[:p] = ( tmpMA2MB[1] ./ tmpMA2MB[2] )[1:env.S]
             # Ps[:q][t,s] = tmpq[t]  # un-adjustment case (CNBS data)
         end
     end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
