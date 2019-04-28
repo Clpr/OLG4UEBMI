@@ -12,8 +12,9 @@ expr_RunModel = :(begin;
 expr_GetDemogDat = :(
    Dict( "TotalPopu" => Dt[:N],
       "LaborPopu" => sum(Ps[:N][:,1:env.Sr],dims=2)[:],
+      "WorkPopuRatio" => sum(Ps[:N][:,1:env.Sr],dims=2)[:] ./ sum(Ps[:N][:,1:env.S],dims=2)[:] ,
       "AgingPopu_65plus" => sum(Ps[:N][:, (65 - env.START_AGE + 1):env.S],dims=2)[:],
-      "AgingPopuRatio" => sum(Ps[:N][:, (65 - env.START_AGE + 1):env.S],dims=2)[:] ./ sum(Ps[:N][:,1:env.Sr],dims=2)[:]
+      "AgingPopuRatio" => sum(Ps[:N][:, (65 - env.START_AGE + 1):env.S],dims=2)[:] ./ sum(Ps[:N][:,1:env.S],dims=2)[:]
    )
 )
 # 0.4 a small function to reset env::NamedTuple
@@ -47,4 +48,4 @@ idx_plot = idx_year2plot .- env.START_YEAR .+ 1
 
 
 
-# 
+#

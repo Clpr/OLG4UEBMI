@@ -1,6 +1,4 @@
-
 # SECTION 2: fertility experiments plotting
-# ---------------------------------------
 # ---------------------------------------
 # 2.1 Fertility experiments and UE-BMI
    # 2.1.1 a temp macro for fast plotting
@@ -36,12 +34,6 @@
       tight_layout()
    # 2.1.3 save figure
    savefig( "./output/FertilityShockProfile.pdf", format = "pdf" )
-
-
-
-
-
-
 
 
    # 2.2 Summary table for benchmark & fertility experiments
@@ -104,6 +96,47 @@
       )
       # 2.2.4 output to a csv file
       CSV.write( "$(pwd())/output/SummaryBench.csv" , df_SummaryFertility )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

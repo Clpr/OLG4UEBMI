@@ -5,25 +5,27 @@
       xlabel("Year"); ylabel("Percentage (%)"); grid(true);
       xlim([ idx_year2plot[1] - 1, idx_year2plot[end] + 1 ]);
       plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* dict_Demog_base["AgingPopuRatio"][idx_plot], "--b" );
+      plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* (1.0 .- dict_Demog_base["WorkPopuRatio"] )[idx_plot], "-.r" );
    )
    # 1.1.2 then, do plotting
    figure( figsize = (13,8) )
       subplot(2,2,1)  # gap / pooling account's expenditure
          plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* (DatPkg_base.Dt[:LI]./DatPkg_base.Dt[:AggPoolExp])[idx_plot] )
          eval(tmpexpr)
-         legend( ("Pool Gap/Pool Benefits","Aging Population Share (65+)"), loc = "lower right")
+         legend( ("Pool Gap/Pool Benefits","Aging Population Share (65+)",L"\rho"), loc = "best")
       subplot(2,2,2)  # gap / pooling account's income
          plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* (DatPkg_base.Dt[:LI]./DatPkg_base.Dt[:AggPoolIn])[idx_plot] )
          eval(tmpexpr)
-         legend( ("Pool Gap/Pool Incomes","Aging Population Share (65+)"), loc = "lower right")
+         legend( ("Pool Gap/Pool Incomes","Aging Population Share (65+)",L"\rho"), loc = "best")
       subplot(2,2,3)  # gap / GDP
          plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* (DatPkg_base.Dt[:LI]./DatPkg_base.Dt[:Y])[idx_plot] )
          eval(tmpexpr)
-         legend( ("Pool Gap/GDP","Aging Population Share (65+)"), loc = "right")
+         legend( ("Pool Gap/GDP","Aging Population Share (65+)",L"\rho"), loc = "best")
       subplot(2,2,4)  # gap / fiscal incomes
          plot( DatPkg_base.Dt[:Year][idx_plot], 100 .* (DatPkg_base.Dt[:LI]./(DatPkg_base.Dt[:TRw] .+ DatPkg_base.Dt[:TRc]))[idx_plot] )
          eval(tmpexpr)
-         legend( ("Pool Gap/Tax Revenues","Aging Population Share (65+)"), loc = "right")      tight_layout()  # tight layout of the figure
+         legend( ("Pool Gap/Tax Revenues","Aging Population Share (65+)",L"\rho"), loc = "best")
+      tight_layout()  # tight layout of the figure
    # 1.1.3 finally, save the figure as a pdf file
    savefig( "./output/BenchProfile.pdf", format = "pdf" )
 # -----------------------------------------

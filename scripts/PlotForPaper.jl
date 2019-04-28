@@ -41,17 +41,18 @@ include("$(pwd())/main.jl") # if not run main.jl yet, run it first
 # SECTION: baseline & fertility experiments plotting
 # -----------------------------------
 # 0. define expr, collection; then run Fertiltiy Experiments
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_01_Def&RunFertilityExperiments.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_01_Def2RunFertilityExperiments.jl")
 
 # 1. baseline plotting (no channel analysis)
    # Figure: Baseline compared with accounting results (BenchmarkCpAccount.pdf)
    # Figure: UE-BMI under baseline scenario (BenchProfile.pdf)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_02_Plot4Baseline.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_02_Plot4Baseline.jl")
 
 # 2. fertility experiments plotting (no channel analysis)
+   # NOTE: including def, expr, eval
    # Figure: Fertility shocks and UE-BMI (FertilityShockProfile.pdf)
    # Table: Summary of baseline simulation (SummaryBench.csv)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_03_Plot4Baseline&FertilityExperiments.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_03_Plot4Baseline&FertilityExperiments.jl")
 
 # 3. compute cor( econ var, aging population ratio )
    # No output file
@@ -59,8 +60,8 @@ include("$(pwd())/scripts/subsections_PlotForPaper/sub_04_Plot4BaselineCor.jl")
 
 # 4. channel analysis in steady states
    # NOTE: based on the decomposition of gap
-   # Figure:
-   # Figure:
+   # NOTE: including def, expr, eval
+   # Figure: Effect decomposition in steady state 2010 parameters (Channel_DecomposeInSState.pdf)
 include("$(pwd())/scripts/subsections_PlotForPaper/sub_05_Plot4ChannelAnalysis.jl")
 
 
@@ -72,19 +73,19 @@ include("$(pwd())/scripts/subsections_PlotForPaper/sub_05_Plot4ChannelAnalysis.j
 # SECTION: contribution rates increase
 # -----------------------------------
 # 0. define expr, collection; then get the econ vars under lattice of zeta values
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_06_Def&RunContributionRateRise.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_06_Def&RunContributionRateRise.jl")
 
 # 1. the four economic vars under different zeta values, plotting
    # Figure: Rising of firm’s contribution rate to UE-BMI (ContributionRateRise.pdf)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_07_Plot4ContributionRateRise.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_07_Plot4ContributionRateRise.jl")
 
 # 2. define expr, collection; then compute the zeta elasticities of diff econ vars
    # NOTE: requires "sub_06_Def&RunContributionRateRise.jl" run
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_08_Def&RunElasticityOfZeta.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_08_Def&RunElasticityOfZeta.jl")
 
 # 3. elasticity analysis on zeta, plotting
    # Figure: ζ elasticity of four economic variables (ContributionRateRise_Elasticity.pdf)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_08_Plot4ZetaElasticity.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_08_Plot4ZetaElasticity.jl")
 
 
 
@@ -93,15 +94,15 @@ include("$(pwd())/scripts/subsections_PlotFotPaper/sub_08_Plot4ZetaElasticity.jl
 # SECTION: UE-BMI contract reforms on individual accounts
 # -----------------------------------
 # 0. define expr, collection; then get the econ vars under diff scenarios
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_10_Def&RunIndiAcctReform.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_10_Def&RunIndiAcctReform.jl")
 
 # 1. the four economic vars under different scenarios, plotting
    # Figure: Reforms of individual accounts of UE-BMI (IndiAcctReform.pdf)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_11_Plot4IndiAcctReform.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_11_Plot4IndiAcctReform.jl")
 
 # 2. crowding out caused by cancelling individual accounts, plotting
    # Figure: Crowding out effects (CrowdingOutEffect.pdf)
-include("$(pwd())/scripts/subsections_PlotFotPaper/sub_12_Plot4CrowdingOutEffect.jl")
+include("$(pwd())/scripts/subsections_PlotForPaper/sub_12_Plot4CrowdingOutEffect.jl")
 
 
 

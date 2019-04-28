@@ -67,7 +67,7 @@ function afunc_getRes( t, Dt, Dst, Pt, Ps, Pc, env )
    local AggMB = sum( Ps[:N][t,1:env.S] .* Dst[:MB][t,1:env.S] )
    local AggPoolExp = AggMB * ( 1.0 - Pt[:cpB][t] )
    local AggPoolIn = AggPoolExp - Dt[:LI][t]
-   local NinSS = sum(Ps[:N][t,:])
+   local NinSS = 1.0
    # mean q (well ... in fact, they are equal among ages)
    local qmean = sum(Ps[:q][t,:]) / env.S
 
@@ -75,16 +75,28 @@ function afunc_getRes( t, Dt, Dst, Pt, Ps, Pc, env )
    tmpRes = (
       LIpercapita = Dt[:LI][t] / NinSS,  # gap per capita
       N = NinSS,  # total population
-      ρ = sum(Ps[:N][t,1:env.Sr]) / sum(Ps[:N][t,:])  , # the retired population ratio
+      ρ = 1.0 - sum(Ps[:N][t,1:env.Sr]) / NinSS  , # the retired population ratio
       c̄ = Dt[:C][t] / NinSS ,
       w̄ = Dt[:w̄][t],
-      l̄ = Dt[:L][t] / NinSS,
+      l̄ = Dt[:L][t] / sum(Ps[:N][t,1:env.Sr]),  # labor per capita is calculated on working people
       Ã = qmean * (1.0 - Pt[:cpB][t]) / ( 1.0 + sum(Ps[:p]) / env.S ) ,  # multiplier of benefit policy
       B̃ = (1.0 - Pt[:𝕒][t] - Pt[:𝕓][t]) * Pt[:ζ][t] / (1.0 + Pt[:z][t] * Pt[:η][t] + Pt[:ζ][t] ) ,  # multiplier of contribution policy
       gap2exp = Dt[:LI][t] / AggPoolExp,
       gap2in = Dt[:LI][t] / AggPoolIn,
       gap2gdp = Dt[:LI][t] / Dt[:Y][t],
       gap2taxrev = Dt[:LI][t] / (Dt[:TRw][t] + Dt[:TRc][t]),
+      AggPoolExp = AggPoolExp,
+      AggPoolIn = AggPoolIn,
+      Y = Dt[:Y][t],
+      TaxRev = Dt[:TRw][t] + Dt[:TRc][t],
+      TRw = Dt[:TRw][t],
+      TRc = Dt[:TRw][t],
+      L = Dt[:L][t],
+      K  =Dt[:K][t],
+      G = Dt[:G][t],
+      r = Dt[:r][t],
+      C = Dt[:C][t],
+      I = Dt[:I][t],
    )
    return tmpRes::NamedTuple
 end # afunc_getRes
@@ -100,6 +112,11 @@ end # afunc_getRes
    function solveSSwithRho( ρ::Real; t::Int = 2010 - 1945 + 1 , Dt = Dt, Dst = Dst, Pt = Pt, Ps = Ps, Pc = Pc, env = env )
       # create two-stage flat demography
       Ps[:N][t,:] = afunc_FlatDemog( ρ, env.S, env.Sr )
+      # Ps[:N][t,:] = Ps[:N][end,:]  # natural exponential mortality case
+      # do not forget to adjust the survival rate (more important than population size)
+      for s in 1:(env.S-1)
+         Ps[:F][t,s] = 1.0 - Ps[:N][t,s+1] / Ps[:N][t,s]
+      end; Ps[:F][t,env.S] = 0.0
       # use p̄ to replace p_s
       Ps[:p][:] .= sum(Ps[:p]) / env.S
       # search SS at that year
@@ -147,14 +164,11 @@ grid_Res = [ solveSSwithRho(ρ) for ρ in grid_ρ ]
 
 # compute lattice vectors of GE effect 𝔾, and cross effect 𝔻
    # 1) GE effect 𝔾
-   itp_𝔾 = itp_Ã(grid_ρ) .* grad_c̄ .-
-           itp_B̃(grid_ρ) .* ( grad_w̄ .* itp_l̄(grid_ρ) + grad_l̄ .* itp_w̄(grid_ρ) ) .+
-           itp_B̃(grid_ρ) .* itp_w̄(grid_ρ) .* itp_l̄(grid_ρ)
+   itp_𝔾 = itp_Ã(grid_ρ) .* grad_c̄ .+ itp_B̃(grid_ρ) .* itp_w̄(grid_ρ) .* itp_l̄(grid_ρ)
    itp_𝔾 = Spline1D(grid_ρ,itp_𝔾) # to unify denotations
    # 2) cross effect 𝔻
-   itp_𝔻 = grid_ρ .* itp_B̃(grid_ρ) .* ( grad_w̄ .* itp_l̄(grid_ρ) + grad_l̄ .* itp_w̄(grid_ρ) )
+   itp_𝔻 = (grid_ρ .- 1.0) .* itp_B̃(grid_ρ) .* ( grad_w̄ .* itp_l̄(grid_ρ) + grad_l̄ .* itp_w̄(grid_ρ) )
    itp_𝔻 = Spline1D(grid_ρ,itp_𝔻)
-
 
 
 
@@ -172,17 +186,6 @@ println("The real/projected 2010's rho is: ", realρ2010 )
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 # ----------------------------------
 # SECTION: relation: ρ -> LI/N (ρ is retired population ratio)
 # NOTE: collects gap per capita, N, ρ, c̄, w̄, l̄, Ã, B̃, LI/PoolExp, LI/PoolIn, LI/Y, LI/TaxRev in the same tuple
@@ -192,67 +195,55 @@ println("The real/projected 2010's rho is: ", realρ2010 )
 tmpexpr = :(
    grid(true); xlabel(L"$\rho$");
 )
-figure(figsize=(18,6))
-   subplot(1,2,1)  # lines: d𝕃/dρ, 𝔾, 𝔻
-      plot(grid_ρ,grad_𝕃percapita,"-")
+figure(figsize=(18,5))
+   subplot(1,3,1)  # lines: 𝔾, 𝔻
       plot(grid_ρ,itp_𝔾(grid_ρ),"-.r")
       plot(grid_ρ,itp_𝔻(grid_ρ),"--b")
       axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
-      text( realρ2010, 0.0, L"Real 2010 ρ = " * string(realρ2010) )
+      text( realρ2010, 0.003, L"Real 2010 ρ = " * string(realρ2010) )
       eval(tmpexpr)
-      legend([L"d$\mathbb{L}$/dρ",
+      legend([
               L"GE effect ($\mathbb{G}$)",
-              L"Corss effect ($\mathbb{D}$)"],
+              L"Cross term ($\mathbb{D}$)"],
               loc="best")
-   subplot(1,2,2)  # lines: 𝔻 = GE part * ρ
-      plot(grid_ρ,itp_𝔻(grid_ρ),"-")
-      plot(grid_ρ,grid_ρ,"-.r")
-      plot(grid_ρ,itp_𝔻(grid_ρ) ./ grid_ρ,"--g")
+  subplot(1,3,2)  # lines: 𝔾 = Ã(dc̄/dρ) + B̃w̄l̄
+     plot(grid_ρ, grad_c̄ .+ itp_B̃(grid_ρ) ,"-.r")
+     plot(grid_ρ, itp_B̃(grid_ρ) .* itp_w̄(grid_ρ) .* itp_l̄(grid_ρ) ,"--g")
+     axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
+     eval(tmpexpr)
+     legend([
+             L"Medical demand influence: $\tilde{A}(d\bar{c}/d\bar{\rho})$",
+             L"Income level influence: $\tilde{B}\bar{w}\bar{l}$"],
+             loc="best")
+   subplot(1,3,3)  # lines: 𝔻 = GE part * ρ
+      plot(grid_ρ,grid_ρ .- 1.0,"-.r")
+      plot(grid_ρ,itp_𝔻(grid_ρ) ./ (grid_ρ .- 1.0),"--g")
       axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
       eval(tmpexpr)
-      legend([L"Corss effect ($\mathbb{D}$) = GE part $\times \rho$ ",
-              L"$\rho$",
-              L"GE part of $\mathbb{D}$"],
+      legend([
+              L"Linear form of $\rho$: $\rho-1$",
+              L"Sensitivity to incomes: $ \tilde{B} ( \frac{\partial \bar{w}}{\partial \rho} \bar{l} + \frac{\partial \bar{l}}{\partial \rho} \bar{w} )  $  "],
               loc="best")
    tight_layout()
    # save figure
    savefig("$(pwd())/output/Channel_DecomposeInSState.pdf", format = "pdf")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# plot(grid_ρ,itp_gap2exp(grid_ρ))
-# plot(grid_ρ,itp_gap2in(grid_ρ))
-# plot(grid_ρ,itp_gap2gdp(grid_ρ))
-# plot(grid_ρ,itp_gap2taxrev(grid_ρ))
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ----------------------------------
+# SECTION: extract other economic variables & interpolations
+# NOTE: please run the programs above to get grid_Res and grid_ρ
+# ----------------------------------
+tmpEconVars = (
+   itp_Y = Spline1D(grid_ρ,[ grid_Res[x].Y for x in 1:length(grid_Res) ]),
+   itp_K = Spline1D(grid_ρ,[ grid_Res[x].K for x in 1:length(grid_Res) ]),
+   itp_L = Spline1D(grid_ρ,[ grid_Res[x].L for x in 1:length(grid_Res) ]),
+   itp_G = Spline1D(grid_ρ,[ grid_Res[x].G for x in 1:length(grid_Res) ]),
+   itp_C = Spline1D(grid_ρ,[ grid_Res[x].C for x in 1:length(grid_Res) ]),
+   itp_I = Spline1D(grid_ρ,[ grid_Res[x].I for x in 1:length(grid_Res) ]),
+   itp_TRw = Spline1D(grid_ρ,[ grid_Res[x].TRw for x in 1:length(grid_Res) ]),
+   itp_TRc = Spline1D(grid_ρ,[ grid_Res[x].TRc for x in 1:length(grid_Res) ]),
+   itp_r = Spline1D(grid_ρ,[ grid_Res[x].r for x in 1:length(grid_Res) ]),
+)
 
 
 
