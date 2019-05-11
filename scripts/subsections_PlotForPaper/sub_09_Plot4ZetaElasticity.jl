@@ -5,17 +5,17 @@ figure(figsize = (8,4))
             afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/exp"]), "-" )
       plot( afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["zetalevels"]) ,
             afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/in"]), "-.b" )
-      plot( afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["zetalevels"]) ,
-            afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/gdp"]), "--r" )
-      plot( afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["zetalevels"]) ,
-            afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/taxrev"]), ":m" )
+      # plot( afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["zetalevels"]) ,
+      #       afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/gdp"]), "--r" )
+      # plot( afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["zetalevels"]) ,
+      #       afunc_PctRelDeviaFrom1stElement(res_ContriRatRise["gap/taxrev"]), ":m" )
       ylabel("Relative Deviation from Benchmark (%)");
       xlabel("ζ - Relative Deviation from Benchmark (%)");
       grid(true);
       legend([ "Gap / Pool Expenditure",
-               "Gap / Pool Income",
-               "Gap / GDP",
-               "Gap / Tax Revenues" ], loc = "best");
+               # "Gap / Tax Revenues"
+               # "Gap / GDP",
+               "Gap / Pool Income", ], loc = "best");
       tight_layout()
 # save figure
 savefig( "./output/ContributionRateRise_Elasticity.pdf", format = "pdf" )

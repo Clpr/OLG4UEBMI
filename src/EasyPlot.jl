@@ -195,7 +195,8 @@ plots key indicators in calibration:
 function Plot_Calibrate( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env::NamedTuple ;
    YearRange::Tuple = ( env.START_YEAR, env.START_YEAR + env.T - 1 ),  # the range of years to plot
    LineWidth::Float64 = 1.0,  # the width of lines to plot
-   outpdf::Union{Nothing,String} = nothing, picsize::Tuple = (12,8) )
+   outpdf::Union{Nothing,String} = nothing, picsize::Tuple = (12,8), tmpLayout::Tuple = (1,2),
+   GlobalFontSize::Int = 12 )
    #  ---------------
    # assertion: years
    @assert( env.START_YEAR <= YearRange[1] < YearRange[2] < (env.START_YEAR + env.T - 1)  ,  "out of the range of years! Maximum T-1 years" )
@@ -208,7 +209,7 @@ function Plot_Calibrate( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env:
    local LI2Ygrowth = (Dt[:LI2Y][2:env.T] ./ Dt[:LI2Y][1:env.T-1] .- 1.0) .* 100
 
    # maximum layout
-   local tmpLayout = (1,2)
+   # local tmpLayout = (1,2)
    # Plotting
    PyPlot.figure( figsize = picsize )
       # PyPlot.subplot(tmpLayout[1],tmpLayout[2], 1)
@@ -219,12 +220,12 @@ function Plot_Calibrate( Dt::Dict, Dst::Dict, Pt::Dict, Ps::Dict, Pc::Dict, env:
       PyPlot.subplot(tmpLayout[1],tmpLayout[2], 1)
       PyPlot.plot( XYEAR, 100.0 .* Dt[:LI][XLOC] ./ Dt[:AggPoolExp][XLOC], linewidth = LineWidth )
          PyPlot.xlabel("Year"); PyPlot.grid(true)
-         PyPlot.ylabel("Pool Account Gap / Pool Account Expenditure (%)")
+         PyPlot.ylabel("Percentage (%)")
       # ------
       PyPlot.subplot(tmpLayout[1],tmpLayout[2], 2)
       PyPlot.plot( XYEAR, 100.0 .* Dt[:LI][XLOC] ./ Dt[:AggPoolIn][XLOC], linewidth = LineWidth )
          PyPlot.xlabel("Year"); PyPlot.grid(true)
-         PyPlot.ylabel("Pool Account Gap / Pool Account Incomes (%)")
+         PyPlot.ylabel("Percentage (%)")
 
       # tight layout
       PyPlot.tight_layout()

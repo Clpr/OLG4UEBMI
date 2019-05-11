@@ -195,8 +195,8 @@ println("The real/projected 2010's rho is: ", realρ2010 )
 tmpexpr = :(
    grid(true); xlabel(L"$\rho$");
 )
-figure(figsize=(18,5))
-   subplot(1,3,1)  # lines: 𝔾, 𝔻
+figure(figsize=(12,8))
+   subplot(3,1,1)  # lines: 𝔾, 𝔻
       plot(grid_ρ,itp_𝔾(grid_ρ),"-.r")
       plot(grid_ρ,itp_𝔻(grid_ρ),"--b")
       axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
@@ -205,8 +205,8 @@ figure(figsize=(18,5))
       legend([
               L"GE effect ($\mathbb{G}$)",
               L"Cross term ($\mathbb{D}$)"],
-              loc="best")
-  subplot(1,3,2)  # lines: 𝔾 = Ã(dc̄/dρ) + B̃w̄l̄
+              loc="center left", fontsize = 14)
+  subplot(3,1,2)  # lines: 𝔾 = Ã(dc̄/dρ) + B̃w̄l̄
      plot(grid_ρ, grad_c̄ .+ itp_B̃(grid_ρ) ,"-.r")
      plot(grid_ρ, itp_B̃(grid_ρ) .* itp_w̄(grid_ρ) .* itp_l̄(grid_ρ) ,"--g")
      axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
@@ -214,8 +214,8 @@ figure(figsize=(18,5))
      legend([
              L"Medical demand influence: $\tilde{A}(d\bar{c}/d\bar{\rho})$",
              L"Income level influence: $\tilde{B}\bar{w}\bar{l}$"],
-             loc="best")
-   subplot(1,3,3)  # lines: 𝔻 = GE part * ρ
+             loc="center left", fontsize = 14)
+   subplot(3,1,3)  # lines: 𝔻 = GE part * ρ
       plot(grid_ρ,grid_ρ .- 1.0,"-.r")
       plot(grid_ρ,itp_𝔻(grid_ρ) ./ (grid_ρ .- 1.0),"--g")
       axvline(realρ2010, linestyle = ":" )  # add a vertical line indicating real ρ in 2010
@@ -223,7 +223,7 @@ figure(figsize=(18,5))
       legend([
               L"Linear form of $\rho$: $\rho-1$",
               L"Sensitivity to incomes: $ \tilde{B} ( \frac{\partial \bar{w}}{\partial \rho} \bar{l} + \frac{\partial \bar{l}}{\partial \rho} \bar{w} )  $  "],
-              loc="best")
+              loc="center left", fontsize = 14)
    tight_layout()
    # save figure
    savefig("$(pwd())/output/Channel_DecomposeInSState.pdf", format = "pdf")

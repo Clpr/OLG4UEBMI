@@ -32,17 +32,20 @@
 # 1.2 simulation v.s. accounting
    # 1.2.1 do underlying plotting & read in accounting data
    EasyPlot.Plot_Calibrate( DatPkg_base.Dt, DatPkg_base.Dst, DatPkg_base.Pt, DatPkg_base.Ps, DatPkg_base.Pc, env,
-      YearRange = ( 2010, 2050 ), LineWidth = 1.0,   outpdf = nothing, picsize = (17.2,5.8)
+      YearRange = ( 2010, 2050 ), LineWidth = 1.0,   outpdf = nothing, picsize = (12,9),
+      tmpLayout = (2,1)
    )
    tmpDat = EasyIO.readcsv("./data/Calib_统筹账户收支核算结果v3_190403.csv")
    tmpEndTime = 40 + 2
    # 1.2.2 decoration (NOTE: do not new a figure GUI, just decorate the current one)
-   subplot(1,2,1)
+   subplot(2,1,1)
       plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,2] , "-.r" )
-      legend(["Benchmark Simulation","Accounting Results"])
-   subplot(1,2,2)
+      legend(["Baseline simulation","Pooling gap / Pooling account expenditure"],
+         fontsize = 14)
+   subplot(2,1,2)
       plot( tmpDat[2:tmpEndTime,1] , 100.0 .* tmpDat[2:tmpEndTime,4] ./ tmpDat[2:tmpEndTime,3] , "-.r" )
-      legend(["Benchmark Simulation","Accounting Results"])
+      legend(["Baseline simulation","Pooling gap / Pooling account revenues"],
+         fontsize = 14)
    tight_layout()
    # 1.2.3 save figure
    savefig( "./output/BenchmarkCpAccount.pdf", format = "pdf" )
